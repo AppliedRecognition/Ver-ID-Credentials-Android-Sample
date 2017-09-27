@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">ID Capture Sample</string>
+    <string name="title_activity_barcode_scan">Barcode Scan</string>
+    <string name="main_intro1">This app demonstrates how Ver-ID captures and verifies government-issued ID cards.</string>
+    <string name="scan_id_card">Scan ID Card</string>
+    <string name="main_intro2">The app collects images of your ID card and verifies the information on the front and back of the card.</string>
+    <string name="compare_live_face">Compare Live Face</string>
+    <string name="main_intro3">The app captures images of you and verifies them against the templates collected at registration.</string>
+    <string name="capture_result_description">Likeness higher than 60 indicates the the ID card is likely yours.</string>
+    <string name="delete_card">Delete card</string>
+    <string name="face_score_error">Failed to compare the live face to the face on the card.</string>
+    <string name="comparing_faces">Comparing live face to the face on the ID card.</string>
+    <string name="live_face_capture_failed">Live face capture failed</string>
+    <string name="failed_to_detect_face">Failed to detect a face</string>
+</resources>
