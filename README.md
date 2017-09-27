@@ -3,21 +3,28 @@ The Ver-ID ID Capture SDK allows your app to capture an image of the user's ID c
 
 ## Adding Ver-ID ID Capture in Your Android Studio Project
 
-1. Obtain an API key and secret for your app at [dev.ver-id.com](https://dev.ver-id.com).
-1. Open your project's **gradle.build** file and under `allprojects/repositories` add
+1. [Request an API secret](https://dev.ver-id.com/admin/register) for your app.
+2. Open your app module's **gradle.build** file.
+1. Under `repositories` add
 
 	```
-	maven {
-		url 'https://dev.ver-id.com/artifactory/gradle-release'
-	}
+	jcenter()
+	maven { url 'http://maven.microblink.com' }
+	maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
 	```
-1. Open your app module's **build.gradle** file and under `dependencies` add
+1. Under `dependencies` add
 
 	```
 	compile 'com.appliedrec:shared:1.8'
 	compile 'com.appliedrec:det-rec-lib:1.8'
 	compile 'com.appliedrec:ver-id:1.8'
 	compile 'com.appliedrec:id-capture:1.8'
+	compile('com.microblink:blinkid:3.9.0@aar') {
+		transitive = true
+	}
+	compile 'com.android.support:appcompat-v7:25.3.1'
+	compile 'com.android.support.constraint:constraint-layout:1.0.2'
+	compile 'com.android.support:design:25.3.1'
 	```
 	
 ## Getting Started with the Ver-ID ID Capture API

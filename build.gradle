@@ -34,9 +34,6 @@ android {
 
 repositories {
     jcenter()
-    flatDir {
-        dirs 'libs'
-    }
     maven { url 'http://maven.microblink.com' }
     maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
 }
@@ -46,8 +43,6 @@ dependencies {
     compile 'com.appliedrec:det-rec-lib:1.8'
     compile 'com.appliedrec:verid:1.8'
     compile 'com.appliedrec:id-capture:1.8'
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-//    compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:25.3.1'
