@@ -15,9 +15,9 @@ The Ver-ID ID Capture SDK allows your app to capture an image of the user's ID c
 1. Under `dependencies` add
 
 	```
-	compile 'com.appliedrec:shared:1.8'
-	compile 'com.appliedrec:det-rec-lib:1.8'
-	compile 'com.appliedrec:ver-id:1.8'
+	compile 'com.appliedrec:shared:1.8.1'
+	compile 'com.appliedrec:det-rec-lib:1.8.1'
+	compile 'com.appliedrec:ver-id:1.8.1'
 	compile 'com.appliedrec:id-capture:1.8'
 	compile('com.microblink:blinkid:3.9.0@aar') {
 		transitive = true
