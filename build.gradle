@@ -18,7 +18,7 @@ android {
         minSdkVersion 18
         targetSdkVersion 25
         versionCode 1
-        versionName "1.8"
+        versionName "2.0"
 
     }
     buildTypes {
@@ -39,10 +39,10 @@ repositories {
 }
 
 dependencies {
-    compile 'com.appliedrec:shared:1.8.1'
-    compile 'com.appliedrec:det-rec-lib:1.8.1'
-    compile 'com.appliedrec:verid:1.8.1'
-    compile 'com.appliedrec:id-capture:1.8'
+    compile 'com.appliedrec:shared:2.0'
+    compile 'com.appliedrec:det-rec-lib:2.0'
+    compile 'com.appliedrec:verid:2.0'
+    compile 'com.appliedrec:id-capture:2.0'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:25.3.1'

@@ -1,5 +1,7 @@
 package com.appliedrec.idcapturesample;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,13 +12,14 @@ import android.util.AttributeSet;
 import android.view.View;
 
 /**
- * Created by jakub on 19/09/2017.
+ * View that shows a gauge with a needle indicating a score between 0 and 1
  */
 
 public class LikenessGaugeView extends View {
 
     private float score;
     private Paint needlePaint;
+    private ValueAnimator scoreAnimator;
 
     public LikenessGaugeView(Context context) {
         super(context);
@@ -41,12 +44,58 @@ public class LikenessGaugeView extends View {
         needlePaint.setStrokeWidth(3 * getContext().getResources().getDisplayMetrics().density);
         needlePaint.setStrokeCap(Paint.Cap.ROUND);
         setBackgroundResource(R.mipmap.likeness_gauge);
+        scoreAnimator = ValueAnimator.ofFloat(0f,0.4f);
+        scoreAnimator.setDuration(8000);
+        scoreAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        scoreAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                score = (float)animation.getAnimatedValue();
+                postInvalidate();
+            }
+        });
+        scoreAnimator.setRepeatCount(ValueAnimator.INFINITE);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // Initially run an animation showing the needle slowly oscillate between 0 and 0.4
+        scoreAnimator.start();
     }
 
     @UiThread
-    public void setScore(float score) {
-        this.score = score;
-        invalidate();
+    public void setScore(final float score) {
+        // When the score value is set animate the needle from the current value
+        scoreAnimator.cancel();
+        scoreAnimator.setFloatValues(this.score, score);
+        scoreAnimator.setRepeatCount(0);
+        scoreAnimator.setDuration(500);
+        scoreAnimator.removeAllListeners();
+        scoreAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                LikenessGaugeView.this.score = score;
+                postInvalidate();
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                LikenessGaugeView.this.score = score;
+                postInvalidate();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+        scoreAnimator.start();
     }
 
     public float getScore() {
