@@ -99,8 +99,8 @@ public class MainActivity extends AppCompatActivity {
         }
         // Load captured ID card result from shared preferences
         idCaptureResult = CardCaptureResultPersistence.loadCardCaptureResult(this);
-        // Check that the card either has a face or a registered user
-        if (idCaptureResult != null && idCaptureResult.getFace() == null && idCaptureResult.getRegisteredUser() == null) {
+        // Check that the card has a face that's either suitable for recognition or is being processed
+        if (idCaptureResult != null && (idCaptureResult.getFace() == null || (!idCaptureResult.getFace().isSuitableForRecognition() && !idCaptureResult.getFace().isBackgroundProcessing()))) {
             idCaptureResult = null;
             // Delete the card, it cannot be used for face recognition
             CardCaptureResultPersistence.saveCardCaptureResult(this, null);
@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void compareLiveFace() {
         // Ensure we have a valid ID capture result to compare the selfie to
-        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idCaptureResult != null && (idCaptureResult.getFace() != null || idCaptureResult.getRegisteredUser() != null)) {
+        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idCaptureResult != null && idCaptureResult.getFace() != null) {
             Intent intent = new Intent(this, CaptureResultActivity.class);
             intent.putExtra(CaptureResultActivity.EXTRA_LIVENESS_DETECTION_RESULT, verIDSessionResult);
             startActivity(intent);

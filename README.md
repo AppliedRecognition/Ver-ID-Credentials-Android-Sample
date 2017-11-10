@@ -15,10 +15,10 @@ The Ver-ID ID Capture SDK allows your app to capture an image of the user's ID c
 1. Under `dependencies` add
 
 	```
-	compile 'com.appliedrec:shared:2.0'
-	compile 'com.appliedrec:det-rec-lib:2.0'
-	compile 'com.appliedrec:verid:2.0'
-	compile 'com.appliedrec:id-capture:2.0'
+	compile 'com.appliedrec:shared:2.0.1'
+	compile 'com.appliedrec:det-rec-lib:2.0.1'
+	compile 'com.appliedrec:verid:2.0.1'
+	compile 'com.appliedrec:id-capture:2.0.1'
 	compile('com.microblink:blinkid:3.9.0@aar') {
 		transitive = true
 	}
@@ -184,27 +184,31 @@ public class MyActivity extends AppCompatActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == REQUEST_CODE_ID_CAPTURE && resultCode == RESULT_OK && data != null) {
+		if (requestCode == REQUEST_CODE_LIVENESS_DETECTION && resultCode == RESULT_OK && data != null) {
 			// Extract the liveness detection session result from the data intent
 			VerIDSessionResult verIDSessionResult = data.getParcelableExtra(VerIDActivity.EXTRA_SESSION_RESULT);
 			if (verIDSessionResult != null && verIDSessionResult.isPositive()) {
-				// Get the URI of the first captured selfie
-				Uri imageUri = verIDSessionResult.getImageUris(VerID.Bearing.STRAIGHT)[0];
-				// Get the bounds of the face detected in the first selfie
-				Rect faceBounds = verIDSessionResult.getFaceBounds(VerID.Bearing.STRAIGHT)[0];
-				InputStream inputStream = getContentResolver().openInputStream(imageUri);
-				try {
-					Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
-					if (cardBitmap != null) {
-						// Crop the selfie to the face bounds
-						Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
-						
-						/**
-						 * Display the face
-						 */
-						((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
+				// Get the face and image URI of the first captured selfie
+				HashMap<IFace,Uri> faceImages = verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT);
+				if (!faceImages.isEmpty()) {
+					Map.Entry<IFace,Uri> faceImage = faceImages.entrySet().iterator().next();
+					// Get the bounds of the face detected in the first selfie
+					Rect faceBounds = new Rect();
+					faceImage.getKey().getBounds().round(faceBounds);
+					InputStream inputStream = getContentResolver().openInputStream(imageUri);
+					try {
+						Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
+						if (cardBitmap != null) {
+							// Crop the selfie to the face bounds
+							Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
+							
+							/**
+							 * Display the face
+							 */
+							((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
+						}
+					} catch (FileNotFoundException e) {
 					}
-				} catch (FileNotFoundException e) {
 				}
 			}
 		}
@@ -223,7 +227,6 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
 
     // Loader IDs
     private static final int LOADER_ID_SCORE = 458;
-    private static final int LOADER_ID_REGISTRATION = 123;
 
     // Live face and ID capture results
     private VerIDSessionResult livenessDetectionResult;
@@ -234,92 +237,70 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
      */
     private static class ScoreLoader extends AsyncTaskLoader<Float> {
 
-        private VerIDUser cardUser;
-        private FBFace[] faces;
+        private IFace cardFace;
+        private IFace[] liveFaces;
 
-        public ScoreLoader(Context context, VerIDUser cardUser, FBFace[] faces) {
+        public ScoreLoader(Context context, IFace cardFace, IFace[] liveFaces) {
             super(context);
-            this.cardUser = cardUser;
-            this.faces = faces;
+            this.cardFace = cardFace;
+            this.liveFaces = liveFaces;
         }
 
         @Override
         public Float loadInBackground() {
-            // Record the current security level settings
-            VerID.SecurityLevel securityLevel = VerID.shared.getSecurityLevel();
-            // ID card face comparison works best with the lowest security level
-            VerID.shared.setSecurityLevel(VerID.SecurityLevel.LOWEST);
-            float score = 0;
-            try {
-                score = VerID.shared.compareUserToFaces(cardUser, faces);
-            } catch (Exception e) {
-                e.printStackTrace();
+            Float score = null;
+            for (IFace face : liveFaces) {
+                try {
+                    float faceScore = FaceUtil.compareFaces(cardFace, face);
+                    if (score == null) {
+                        score = faceScore;
+                    } else {
+                        score = Math.max(faceScore, score);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            // Restore the previous security level
-            VerID.shared.setSecurityLevel(securityLevel);
             return score;
         }
     }
-
-    /**
-     * Loader that registers the face on the ID card so that it can be compared to the live selfie faces
-     */
-    private static class RegistrationLoader extends AsyncTaskLoader<VerIDUser> {
-
-        private FBFace face;
-
-        public RegistrationLoader(Context context, FBFace face) {
-            super(context);
-            this.face = face;
-        }
-
-        @Override
-        public VerIDUser loadInBackground() {
-            VerIDUser user;
-            try {
-                user = VerID.shared.registerUserWithFace("cardUser", face, false);
-            } catch (Exception e) {
-                e.printStackTrace();
-                user = null;
-            }
-            return user;
-        }
-    }
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // TODO: Obtain idCaptureResult and livenessDetectionResult, e.g. as intent extras
-        if (livenessDetectionResult != null && idCaptureResult != null && idCaptureResult.getFace() != null && intent != null) {
-            // Check whether the face on the captured ID card is being processed
-            if (idCaptureResult.getRegisteredUser() == null && idCaptureResult.getFace().isBackgroundProcessing()) {
+        // Set up views
+        // Obtain idCaptureResult and livenessDetectionResult, e.g. from intent parcelable
+        // ...
+        if (idCaptureResult != null && idCaptureResult.getFace() != null && livenessDetectionResult != null && livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT).length > 0) {
+            if (idCaptureResult.getFace().isSuitableForRecognition()) {
+                // The card capture result has a suitable face
+                compareFaceTemplates();
+                return;
+            } else if (idCaptureResult.getFace().isBackgroundProcessing()) {
                 // The ID card face is being processed. Listen for face template extraction events
                 VerID.shared.getFaceTemplateExtraction().addListener(idCaptureResult.getFace().getId(), this);
-            } else {
-                initScoreLoaderIfReady();
+                return;
             }
-        } else {
-            updateScore(null);
         }
+        updateScore(null);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         getLoaderManager().destroyLoader(LOADER_ID_SCORE);
-        getLoaderManager().destroyLoader(LOADER_ID_REGISTRATION);
         if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isBackgroundProcessing()) {
             VerID.shared.getFaceTemplateExtraction().removeListener(idCaptureResult.getFace().getId(), this);
         }
     }
 
-    private void initScoreLoaderIfReady() {
-        if (idCaptureResult.getRegisteredUser() != null) {
+    private void compareFaceTemplates() {
+        if (idCaptureResult.getFace().isSuitableForRecognition()) {
             // The face on the ID card is registered, calculate the similarity score
-            getSupportLoaderManager().initLoader(LOADER_ID_SCORE, null, this).forceLoad();
-        } else if (idCaptureResult.getFace().isSuitableForRecognition()) {
-            // Register user on the ID card
-            getSupportLoaderManager().initLoader(LOADER_ID_REGISTRATION, null, this).forceLoad();
+            Loader loader = getSupportLoaderManager().initLoader(LOADER_ID_SCORE, null, this);
+            if (loader != null) {
+                loader.forceLoad();
+            }
         }
     }
 
@@ -329,13 +310,17 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         if (idCaptureResult.getFace() != null && idCaptureResult.getFace().isBackgroundProcessing() && idCaptureResult.getFace().getId() == faceId) {
             // Face template has been extracted from the face in the ID card. The face is now ready to be registered
             idCaptureResult.setFace(face);
-            CardCaptureResultPersistence.saveCardCaptureResult(this, idCaptureResult);
-            initScoreLoaderIfReady();
+            if (idCaptureResult.getFace().isSuitableForRecognition()) {
+                compareFaceTemplates();
+            } else {
+                updateScore(null);
+            }
         }
     }
 
     @Override
     public void onFaceTemplateExtractionProgress(long faceId, double progress) {
+
     }
 
     @Override
@@ -346,55 +331,29 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
 
     @Override
     public Loader onCreateLoader(int id, Bundle args) {
-        switch (id) {
-            case LOADER_ID_REGISTRATION:
-                if (idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition()) {
-                    return new RegistrationLoader(this, idCaptureResult.getFace());
-                } else {
-                    updateScore(null);
-                    return null;
-                }
-            case LOADER_ID_SCORE:
-                if (idCaptureResult.getRegisteredUser() != null) {
-                    return new ScoreLoader(this, idCaptureResult.getRegisteredUser(), livenessDetectionResult.getFacesSuitableForRecognition());
-                } else {
-                    updateScore(null);
-                    return null;
-                }
-            default:
-                return null;
-
+        if (idCaptureResult.getFace() != null) {
+            return new ScoreLoader(this, idCaptureResult.getFace(), livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT));
+        } else {
+            updateScore(null);
+            return null;
         }
     }
 
     @Override
     public void onLoadFinished(Loader loader, Object data) {
-        switch (loader.getId()) {
-            case LOADER_ID_REGISTRATION:
-                if (data != null && (data instanceof VerIDUser)) {
-                    VerIDUser user = (VerIDUser) data;
-                    idCaptureResult.setRegisteredUser(user);
-                    CardCaptureResultPersistence.saveCardCaptureResult(this, idCaptureResult);
-                    initScoreLoaderIfReady();
-                } else {
-                    updateScore(null);
-                }
-                break;
-            case LOADER_ID_SCORE:
-                Float score = (Float) data;
-                updateScore(score);
-                break;
-        }
+        Float score = (Float) data;
+        updateScore(score);
     }
 
     @Override
     public void onLoaderReset(Loader loader) {
+        
     }
 
     @UiThread
     private void updateScore(Float score) {
         if (score != null) {
-            // Display score
+            // Display the score
         } else {
             // Display error
         }
