@@ -19,9 +19,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.appliedrec.detreclib.detection.FBFace;
 import com.appliedrec.detreclib.detection.IFace;
-import com.appliedrec.ver_id.FaceTemplateExtraction;
 import com.appliedrec.ver_id.VerID;
 import com.appliedrec.ver_id.model.RecognitionFace;
 import com.appliedrec.ver_id.session.VerIDSessionResult;
@@ -31,7 +29,7 @@ import com.appliedrec.ver_ididcapture.data.IDCaptureResult;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-public class CaptureResultActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks, FaceTemplateExtraction.FaceTemplateExtractionListener {
+public class CaptureResultActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks {
 
     // Extra name constant
     public static final String EXTRA_LIVENESS_DETECTION_RESULT = "com.appliedrec.ver_ididcapture.EXTRA_LIVENESS_DETECTION_RESULT";
@@ -144,19 +142,13 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         });
         idCaptureResult = CardCaptureResultPersistence.loadCardCaptureResult(this);
         Intent intent = getIntent();
-        if (idCaptureResult != null && idCaptureResult.getFace() != null && intent != null) {
+        if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition() && intent != null) {
             livenessDetectionResult = intent.getParcelableExtra(EXTRA_LIVENESS_DETECTION_RESULT);
             if (livenessDetectionResult != null && livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT).length > 0) {
                 // Get the cropped face images
                 getSupportLoaderManager().initLoader(LOADER_ID_CARD_FACE, intent.getExtras(), this).forceLoad();
                 getSupportLoaderManager().initLoader(LOADER_ID_LIVE_FACE, intent.getExtras(), this).forceLoad();
-                if (idCaptureResult.getFace().isSuitableForRecognition()) {
-                    // The card capture result has a suitable face
-                    compareFaceTemplates();
-                } else if (idCaptureResult.getFace().isBackgroundProcessing()) {
-                    // The ID card face is being processed. Listen for face template extraction events
-                    VerID.shared.getFaceTemplateExtraction().addListener(idCaptureResult.getFace().getId(), this);
-                }
+                getSupportLoaderManager().initLoader(LOADER_ID_SCORE, null, this).forceLoad();
                 return;
             }
         }
@@ -169,45 +161,6 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         getLoaderManager().destroyLoader(LOADER_ID_CARD_FACE);
         getLoaderManager().destroyLoader(LOADER_ID_LIVE_FACE);
         getLoaderManager().destroyLoader(LOADER_ID_SCORE);
-        if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isBackgroundProcessing()) {
-            VerID.shared.getFaceTemplateExtraction().removeListener(idCaptureResult.getFace().getId(), this);
-        }
-    }
-
-    private void compareFaceTemplates() {
-        if (idCaptureResult.getFace().isSuitableForRecognition()) {
-            // The face on the ID card is registered, calculate the similarity score
-            Loader loader = getSupportLoaderManager().initLoader(LOADER_ID_SCORE, null, this);
-            if (loader != null) {
-                loader.forceLoad();
-            }
-        }
-    }
-
-    @Override
-    public void onFaceTemplateExtracted(long faceId, FBFace face) {
-        VerID.shared.getFaceTemplateExtraction().removeListener(faceId, this);
-        if (idCaptureResult.getFace() != null && idCaptureResult.getFace().isBackgroundProcessing() && idCaptureResult.getFace().getId() == faceId) {
-            // Face template has been extracted from the face in the ID card. The face is now ready to be registered
-            idCaptureResult.setFace(face);
-            CardCaptureResultPersistence.saveCardCaptureResult(this, idCaptureResult);
-            if (idCaptureResult.getFace().isSuitableForRecognition()) {
-                compareFaceTemplates();
-            } else {
-                updateScore(null);
-            }
-        }
-    }
-
-    @Override
-    public void onFaceTemplateExtractionProgress(long faceId, double progress) {
-
-    }
-
-    @Override
-    public void onFaceTemplateExtractionFailed(long faceId, Exception exception) {
-        VerID.shared.getFaceTemplateExtraction().removeListener(faceId, this);
-        updateScore(null);
     }
 
     @Override
@@ -219,22 +172,13 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
                 idCaptureResult.getFaceBounds().round(cardImageFaceBounds);
                 return new ImageLoader(this, cardImageUri, cardImageFaceBounds);
             case LOADER_ID_LIVE_FACE:
-                RecognitionFace[] faces = livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT);
-                if (faces.length > 0) {
-                    RecognitionFace face = faces[0];
-                    Uri faceImageUri = livenessDetectionResult.getFaceImages().get(face);
-                    Rect faceImageFaceBounds = new Rect();
-                    face.getBounds().round(faceImageFaceBounds);
-                    return new ImageLoader(this, faceImageUri, faceImageFaceBounds);
-                }
-                return null;
+                RecognitionFace face = livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT)[0];
+                Uri faceImageUri = livenessDetectionResult.getFaceImages().get(face);
+                Rect faceImageFaceBounds = new Rect();
+                face.getBounds().round(faceImageFaceBounds);
+                return new ImageLoader(this, faceImageUri, faceImageFaceBounds);
             case LOADER_ID_SCORE:
-                if (idCaptureResult.getFace() != null) {
-                    return new ScoreLoader(this, idCaptureResult.getFace(), livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT));
-                } else {
-                    updateScore(null);
-                    return null;
-                }
+                return new ScoreLoader(this, idCaptureResult.getFace(), livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT));
             default:
                 return null;
 

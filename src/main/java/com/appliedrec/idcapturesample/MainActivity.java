@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Start the ID card scan
                 verIDSessionResult = null;
-                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(Region.GENERAL, true, true);
+                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(Region.GENERAL, true, true, true);
                 Intent intent = new VerIDIDCaptureIntent(MainActivity.this, settings);
                 startActivityForResult(intent, REQUEST_CODE_CARD);
             }
@@ -99,8 +99,8 @@ public class MainActivity extends AppCompatActivity {
         }
         // Load captured ID card result from shared preferences
         idCaptureResult = CardCaptureResultPersistence.loadCardCaptureResult(this);
-        // Check that the card has a face that's either suitable for recognition or is being processed
-        if (idCaptureResult != null && (idCaptureResult.getFace() == null || (!idCaptureResult.getFace().isSuitableForRecognition() && !idCaptureResult.getFace().isBackgroundProcessing()))) {
+        // Check that the card has a face that's suitable for recognition
+        if (idCaptureResult != null && (idCaptureResult.getFace() == null || !idCaptureResult.getFace().isSuitableForRecognition())) {
             idCaptureResult = null;
             // Delete the card, it cannot be used for face recognition
             CardCaptureResultPersistence.saveCardCaptureResult(this, null);
@@ -144,9 +144,11 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_CARD && resultCode == RESULT_OK && data != null) {
             // Received an ID card
             idCaptureResult = data.getParcelableExtra(IDCaptureActivity.EXTRA_RESULT);
-            if (idCaptureResult != null) {
+            if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition()) {
                 // Save the card to shared preferences
                 CardCaptureResultPersistence.saveCardCaptureResult(this, idCaptureResult);
+            } else {
+                idCaptureResult = null;
             }
             updateContent();
         } else if (requestCode == REQUEST_CODE_FACE && resultCode == RESULT_OK && data != null) {
@@ -226,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void compareLiveFace() {
         // Ensure we have a valid ID capture result to compare the selfie to
-        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idCaptureResult != null && idCaptureResult.getFace() != null) {
+        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition()) {
             Intent intent = new Intent(this, CaptureResultActivity.class);
             intent.putExtra(CaptureResultActivity.EXTRA_LIVENESS_DETECTION_RESULT, verIDSessionResult);
             startActivity(intent);
