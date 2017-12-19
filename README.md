@@ -77,6 +77,8 @@ public class MyActivity extends AppCompatActivity {
 		boolean showGuide = true;
 		// If you want to show the result of the scan to the user set this to true
 		boolean showResult = true;
+		// To extract a face that's suitable for face recognition
+		boolean detectFaceForRecognition = true;
 		// Set the region where the requested card was issued.
 		// If you want the API to guess use the RegionUtil utility class.
 		// The utility class will base the region on the device's SIM card provider 
@@ -84,7 +86,7 @@ public class MyActivity extends AppCompatActivity {
 		// set the variable to Region.GENERAL.
 		Region region = RegionUtil.getUserRegion(this);
 		// Construct ID capture settings
-		VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(region, showGuide, showResult);
+		VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(region, showGuide, showResult, detectFaceForRecognition);
 		// Construct an intent
 		VerIDIDCaptureIntent intent = new VerIDIDCaptureIntent(this, settings);
 		// Start the ID capture activity
@@ -172,8 +174,12 @@ public class MyActivity extends AppCompatActivity {
 	 * (for example in response to a button click).
 	 */
 	void runLivenessDetection() {
+		// Create liveness detection settings
+		VerIDLivenessDetectionSessionSettings settings = new VerIDLivenessDetectionSessionSettings();
+		// Ask Ver-ID to extract face templates needed for face recognition
+		settings.includeFaceTemplatesInResult = true;
 		// Construct the liveness detection intent
-		VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this);
+		VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this, settings);
 		// Start the liveness detection activity
 		startActivityForResult(intent, REQUEST_CODE_LIVENESS_DETECTION);
 	}
@@ -220,134 +226,45 @@ public class MyActivity extends AppCompatActivity {
 
 Building on example 1 and 2, you can use the results of the ID capture and liveness detection sessions and compare their faces. The activity below contains two `AsyncTaskLoader` classes that extract the bitmaps from the results and run the face comparison.
 
-**Important:** When requesting the live face you must set `includeFaceTemplatesInResult` of the `VerIDLivenessDetectionSessionSettings` object to `true` to extract the captured face template and make it available for recognition.
+**Important:** When requesting the live face you must set `includeFaceTemplatesInResult` of the `VerIDLivenessDetectionSessionSettings` and `detectFaceForRecognition` of the `VerIDIDCaptureSettings` object to `true` to extract the captured face template and make it available for recognition.
 
 ~~~java
-public class CaptureResultActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks, FaceTemplateExtraction.FaceTemplateExtractionListener {
-
-    // Loader IDs
-    private static final int LOADER_ID_SCORE = 458;
+public class CaptureResultActivity extends AppCompatActivity {
 
     // Live face and ID capture results
     private VerIDSessionResult livenessDetectionResult;
     private IDCaptureResult idCaptureResult;
 
-    /**
-     * Loader that compares the face from the card with the live face(s)
-     */
-    private static class ScoreLoader extends AsyncTaskLoader<Float> {
-
-        private IFace cardFace;
-        private IFace[] liveFaces;
-
-        public ScoreLoader(Context context, IFace cardFace, IFace[] liveFaces) {
-            super(context);
-            this.cardFace = cardFace;
-            this.liveFaces = liveFaces;
-        }
-
-        @Override
-        public Float loadInBackground() {
-            Float score = null;
-            for (IFace face : liveFaces) {
-                try {
-                    float faceScore = FaceUtil.compareFaces(cardFace, face);
-                    if (score == null) {
-                        score = faceScore;
-                    } else {
-                        score = Math.max(faceScore, score);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            return score;
-        }
-    }
-    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Set up views
         // Obtain idCaptureResult and livenessDetectionResult, e.g. from intent parcelable
         // ...
-        if (idCaptureResult != null && idCaptureResult.getFace() != null && livenessDetectionResult != null && livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT).length > 0) {
-            if (idCaptureResult.getFace().isSuitableForRecognition()) {
-                // The card capture result has a suitable face
-                compareFaceTemplates();
-                return;
-            } else if (idCaptureResult.getFace().isBackgroundProcessing()) {
-                // The ID card face is being processed. Listen for face template extraction events
-                VerID.shared.getFaceTemplateExtraction().addListener(idCaptureResult.getFace().getId(), this);
-                return;
-            }
+        if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition() && livenessDetectionResult != null && livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT).length > 0) {
+            compareFaceTemplates();
+            return;
         }
         updateScore(null);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        getLoaderManager().destroyLoader(LOADER_ID_SCORE);
-        if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isBackgroundProcessing()) {
-            VerID.shared.getFaceTemplateExtraction().removeListener(idCaptureResult.getFace().getId(), this);
-        }
     }
 
     private void compareFaceTemplates() {
-        if (idCaptureResult.getFace().isSuitableForRecognition()) {
-            // The face on the ID card is registered, calculate the similarity score
-            Loader loader = getSupportLoaderManager().initLoader(LOADER_ID_SCORE, null, this);
-            if (loader != null) {
-                loader.forceLoad();
+        Float score = null;
+        IFace[] cardFace = idCaptureResult.getFace();
+        IFace[] liveFaces = livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT);
+        for (IFace face : liveFaces) {
+            try {
+                float faceScore = FaceUtil.compareFaces(cardFace, face);
+                if (score == null) {
+                    score = faceScore;
+                } else {
+                    score = Math.max(faceScore, score);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    public void onFaceTemplateExtracted(long faceId, FBFace face) {
-        VerID.shared.getFaceTemplateExtraction().removeListener(faceId, this);
-        if (idCaptureResult.getFace() != null && idCaptureResult.getFace().isBackgroundProcessing() && idCaptureResult.getFace().getId() == faceId) {
-            // Face template has been extracted from the face in the ID card. The face is now ready to be registered
-            idCaptureResult.setFace(face);
-            if (idCaptureResult.getFace().isSuitableForRecognition()) {
-                compareFaceTemplates();
-            } else {
-                updateScore(null);
-            }
-        }
-    }
-
-    @Override
-    public void onFaceTemplateExtractionProgress(long faceId, double progress) {
-
-    }
-
-    @Override
-    public void onFaceTemplateExtractionFailed(long faceId, Exception exception) {
-        VerID.shared.getFaceTemplateExtraction().removeListener(faceId, this);
-        updateScore(null);
-    }
-
-    @Override
-    public Loader onCreateLoader(int id, Bundle args) {
-        if (idCaptureResult.getFace() != null) {
-            return new ScoreLoader(this, idCaptureResult.getFace(), livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT));
-        } else {
-            updateScore(null);
-            return null;
-        }
-    }
-
-    @Override
-    public void onLoadFinished(Loader loader, Object data) {
-        Float score = (Float) data;
         updateScore(score);
-    }
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        
     }
 
     @UiThread
