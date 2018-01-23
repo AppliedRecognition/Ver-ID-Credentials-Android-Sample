@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">ID Capture Sample</string>
     <string name="main_intro1">This app demonstrates how Ver-ID captures and verifies government-issued ID cards.</string>
     <string name="scan_id_card">Scan ID Card</string>
@@ -11,4 +11,5 @@
     <string name="live_face_capture_failed">Live face capture failed</string>
     <string name="failed_to_detect_face">Failed to detect a face</string>
     <string name="verid_failed_to_load">Ver-ID failed to load</string>
+    <string name="similarity_score">Similarity score <xliff:g id="score" example="7.9/10">%1$.1f/10</xliff:g></string>
 </resources>

@@ -16,7 +16,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".CaptureResultActivity"></activity>
-        <meta-data android:name="com.appliedrec.verid.apiSecret" android:value="db65b2122ccd0e5ac858e1c4df1e751d82a21a82e1ebf3c943511d0c11d7c29b" />
+        <meta-data android:name="com.appliedrec.verid.apiSecret" android:value="940a98644e02ae8c1726f94c926f27d4e06e32f8f6b304906766f8574511a630" />
     </application>
 
 </manifest>

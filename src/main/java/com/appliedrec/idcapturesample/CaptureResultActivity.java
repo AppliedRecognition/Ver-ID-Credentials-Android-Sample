@@ -43,9 +43,9 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
     private ImageView liveFaceView;
     private ImageView cardFaceView;
     private LikenessGaugeView likenessGaugeView;
-    private TextView scoreTextView;
+//    private TextView scoreTextView;
     private TextView resultTextView;
-    private View progressIndicatorView;
+//    private View progressIndicatorView;
 
     // Extracted card and face images
     private Bitmap cardFaceImage;
@@ -129,17 +129,8 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         setContentView(R.layout.activity_capture_result);
         liveFaceView = (ImageView) findViewById(R.id.live_face);
         cardFaceView = (ImageView) findViewById(R.id.card_face);
-        scoreTextView = (TextView) findViewById(R.id.likeness_score);
         resultTextView = (TextView) findViewById(R.id.text);
         likenessGaugeView = (LikenessGaugeView) findViewById(R.id.likeness_gauge);
-        progressIndicatorView = findViewById(R.id.score_progress);
-        findViewById(R.id.done_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setResult(RESULT_OK);
-                finish();
-            }
-        });
         idCaptureResult = CardCaptureResultPersistence.loadCardCaptureResult(this);
         Intent intent = getIntent();
         if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition() && intent != null) {
@@ -235,14 +226,10 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
 
     @UiThread
     private void updateScore(Float score) {
-        progressIndicatorView.setVisibility(View.GONE);
-        scoreTextView.setVisibility(View.VISIBLE);
         if (score != null) {
-            scoreTextView.setText(String.format("%.0f%%", score.floatValue() * 100f));
-            resultTextView.setText("");
+            resultTextView.setText(getResources().getString(R.string.similarity_score, score.floatValue() * 10f));
         } else {
             score = 0f;
-            scoreTextView.setText("?");
             resultTextView.setText(R.string.face_score_error);
         }
         likenessGaugeView.setScore(score.floatValue());

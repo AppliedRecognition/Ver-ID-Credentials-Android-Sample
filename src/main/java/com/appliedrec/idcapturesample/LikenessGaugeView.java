@@ -6,6 +6,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.util.AttributeSet;
@@ -43,7 +45,7 @@ public class LikenessGaugeView extends View {
         needlePaint.setColor(Color.BLACK);
         needlePaint.setStrokeWidth(3 * getContext().getResources().getDisplayMetrics().density);
         needlePaint.setStrokeCap(Paint.Cap.ROUND);
-        setBackgroundResource(R.mipmap.likeness_gauge);
+        setBackgroundResource(R.mipmap.similarity_dial);
         scoreAnimator = ValueAnimator.ofFloat(0f,0.4f);
         scoreAnimator.setDuration(8000);
         scoreAnimator.setRepeatMode(ValueAnimator.REVERSE);
@@ -105,10 +107,17 @@ public class LikenessGaugeView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        double maxScore = 1.0;
-        double sweep = (double) score / maxScore * Math.PI;
-        float x = (float)(Math.cos(sweep) * (double) getWidth() / 2.0);
-        float y = (float)(Math.sin(sweep) * (double) getWidth() / 2.0);
-        canvas.drawLine(getWidth() / 2f, getHeight(), getWidth() / 2f - x, getHeight() - y, needlePaint);
+        float top = (float)getHeight() / 93f * 7f;
+        RectF elipseRect = new RectF(0, top, getWidth(), top + (float)getWidth() / 248f * 158f);
+        float angleOffset = 0.57f;
+        float minAngle = (float)(Math.PI + angleOffset);
+        float maxAngle = (float)(Math.PI * 2 - angleOffset);
+        float angle = minAngle + score * (maxAngle - minAngle);
+        float length = elipseRect.right - elipseRect.centerX();
+        float height = (float)(Math.sin(angle) * length * (elipseRect.height() / elipseRect.width()));
+        float width = (float)(Math.cos(angle) * length);
+        PointF origin = new PointF(elipseRect.centerX(), elipseRect.centerY());
+        PointF destination = new PointF(elipseRect.centerX() + width, elipseRect.centerY() + height);
+        canvas.drawLine(origin.x, origin.y, destination.x, destination.y, needlePaint);
     }
 }

@@ -11,15 +11,14 @@
     <LinearLayout
         android:id="@+id/hero"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="135"
-        android:background="@color/topBackground"
+        android:layout_height="wrap_content"
+        android:gravity="center"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="30dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="30dp"
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="horizontal">
@@ -28,73 +27,34 @@
                 android:id="@+id/card_face"
                 android:layout_width="80dp"
                 android:layout_height="100dp"
-                android:scaleType="centerCrop" />
-
-            <TextView
-                android:id="@+id/likeness_score"
-                android:layout_width="90dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/default_padding"
-                android:layout_marginRight="@dimen/default_padding"
-                android:gravity="center"
-                android:text="100"
-                android:textAppearance="@style/TextAppearance.AppCompat.Display2"
-                android:visibility="gone" />
-
-            <ProgressBar
-                android:id="@+id/score_progress"
-                style="@style/Widget.AppCompat.ProgressBar"
-                android:layout_width="90dp"
-                android:layout_height="wrap_content" />
+                android:scaleType="centerCrop"
+                android:layout_marginRight="8dp"/>
 
             <ImageView
                 android:id="@+id/live_face"
                 android:layout_width="80dp"
                 android:layout_height="100dp"
+                android:layout_marginLeft="8dp"
                 android:scaleType="centerCrop" />
         </LinearLayout>
 
         <com.appliedrec.idcapturesample.LikenessGaugeView
             android:id="@+id/likeness_gauge"
-            android:layout_width="188dp"
-            android:layout_height="96dp"
+            android:layout_width="248dp"
+            android:layout_height="93dp"
+            android:layout_marginBottom="30dp"
             android:layout_gravity="center" />
-    </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="100"
-        android:orientation="vertical">
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="@dimen/padding_default">
-
-            <TextView
-                android:id="@+id/text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/comparing_faces"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
-        </ScrollView>
-
-        <LinearLayout
+        <TextView
+            android:id="@+id/text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="right"
-            android:orientation="horizontal"
-            android:padding="@dimen/padding_default">
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:gravity="center"
+            android:text="@string/comparing_faces"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
-            <Button
-                android:id="@+id/done_button"
-                style="@style/Widget.AppCompat.Button.Borderless.Colored"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/padding_default"
-                android:text="@string/done" />
-        </LinearLayout>
     </LinearLayout>
+
 </LinearLayout>
