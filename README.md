@@ -15,16 +15,16 @@ The Ver-ID ID Capture SDK allows your app to capture an image of the user's ID c
 1. Under `dependencies` add
 
 	```
-	compile 'com.appliedrec:shared:2.0.4'
-	compile 'com.appliedrec:det-rec-lib:2.0.4'
-	compile 'com.appliedrec:verid:2.0.4'
-	compile 'com.appliedrec:id-capture:2.0.5'
-	compile('com.microblink:blinkid:3.9.0@aar') {
+	implementation 'com.appliedrec:shared:3.1.2'
+	implementation 'com.appliedrec:det-rec-lib:3.1.2'
+	implementation 'com.appliedrec:verid:3.1.2'
+	implementation 'com.appliedrec:id-capture:3.0.0'
+	implementation('com.microblink:blinkid:3.9.0@aar') {
 		transitive = true
 	}
-	compile 'com.android.support:appcompat-v7:25.3.1'
-	compile 'com.android.support.constraint:constraint-layout:1.0.2'
-	compile 'com.android.support:design:25.3.1'
+	implementation 'com.android.support:appcompat-v7:25.4.0'
+	implementation 'com.android.support.constraint:constraint-layout:1.1.1'
+	implementation 'com.android.support:design:25.4.0'
 	```
 	
 ## Getting Started with the Ver-ID ID Capture API

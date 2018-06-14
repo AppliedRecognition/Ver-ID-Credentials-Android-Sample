@@ -1,9 +1,13 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.android.tools.build:gradle:3.1.3'
     }
 }
 
@@ -11,14 +15,14 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "com.appliedrec.idcapturesample"
         minSdkVersion 18
         targetSdkVersion 25
         versionCode 1
-        versionName "2.0.5"
+        versionName "3.0.0"
 
     }
     buildTypes {
@@ -36,17 +40,21 @@ repositories {
     jcenter()
     maven { url 'http://maven.microblink.com' }
     maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
+    maven {
+        url 'https://maven.google.com/'
+        name 'Google'
+    }
 }
 
 dependencies {
-    compile 'com.appliedrec:shared:2.0.5'
-    compile 'com.appliedrec:det-rec-lib:2.0.5'
-    compile 'com.appliedrec:verid:2.0.5'
-    compile 'com.appliedrec:id-capture:2.0.5'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.android.support:design:25.3.1'
-    compile('com.microblink:blinkid:3.9.0@aar') {
+    implementation 'com.appliedrec:shared:3.1.2'
+    implementation 'com.appliedrec:det-rec-lib:3.1.2'
+    implementation 'com.appliedrec:verid:3.1.2'
+    implementation 'com.appliedrec:id-capture:3.0.0'
+    implementation 'com.android.support:appcompat-v7:25.4.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.1'
+    implementation 'com.android.support:design:25.4.0'
+    implementation('com.microblink:blinkid:3.9.0@aar') {
         transitive = true
     }
 }

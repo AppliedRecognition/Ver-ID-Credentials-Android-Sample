@@ -15,7 +15,6 @@ import android.support.v4.content.Loader;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v7.app.AppCompatActivity;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,7 +23,7 @@ import com.appliedrec.ver_id.VerID;
 import com.appliedrec.ver_id.model.RecognitionFace;
 import com.appliedrec.ver_id.session.VerIDSessionResult;
 import com.appliedrec.ver_id.util.FaceUtil;
-import com.appliedrec.ver_ididcapture.data.IDCaptureResult;
+import com.appliedrec.ver_ididcapture.data.IDDocument;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -53,7 +52,7 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
 
     // Live face and ID capture results
     private VerIDSessionResult livenessDetectionResult;
-    private IDCaptureResult idCaptureResult;
+    private IDDocument idDocument;
 
     /**
      * Loader that compares the face from the card with the live face(s)
@@ -131,9 +130,9 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         cardFaceView = (ImageView) findViewById(R.id.card_face);
         resultTextView = (TextView) findViewById(R.id.text);
         likenessGaugeView = (LikenessGaugeView) findViewById(R.id.likeness_gauge);
-        idCaptureResult = CardCaptureResultPersistence.loadCardCaptureResult(this);
+        idDocument = CardCaptureResultPersistence.loadCapturedDocument(this);
         Intent intent = getIntent();
-        if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition() && intent != null) {
+        if (idDocument != null && idDocument.getFaceSuitableForRecognition() != null && intent != null) {
             livenessDetectionResult = intent.getParcelableExtra(EXTRA_LIVENESS_DETECTION_RESULT);
             if (livenessDetectionResult != null && livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT).length > 0) {
                 // Get the cropped face images
@@ -158,9 +157,9 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
     public Loader onCreateLoader(int id, Bundle args) {
         switch (id) {
             case LOADER_ID_CARD_FACE:
-                Uri cardImageUri = idCaptureResult.getFrontImageUri();
+                Uri cardImageUri = idDocument.getImageUri();
                 Rect cardImageFaceBounds = new Rect();
-                idCaptureResult.getFaceBounds().round(cardImageFaceBounds);
+                idDocument.getFaceSuitableForRecognition().getBounds().round(cardImageFaceBounds);
                 return new ImageLoader(this, cardImageUri, cardImageFaceBounds);
             case LOADER_ID_LIVE_FACE:
                 RecognitionFace face = livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT)[0];
@@ -169,7 +168,7 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
                 face.getBounds().round(faceImageFaceBounds);
                 return new ImageLoader(this, faceImageUri, faceImageFaceBounds);
             case LOADER_ID_SCORE:
-                return new ScoreLoader(this, idCaptureResult.getFace(), livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT));
+                return new ScoreLoader(this, idDocument.getFace(), livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT));
             default:
                 return null;
 

@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.appliedrec.ver_ididcapture.data.IDCaptureResult;
+import com.appliedrec.ver_ididcapture.data.IDDocument;
 
 import org.json.JSONException;
 
@@ -15,15 +15,15 @@ import org.json.JSONException;
 
 public class CardCaptureResultPersistence {
 
-    private static final String CARD_CAPTURE_RESULT_KEY = "idCaptureResult";
+    private static final String ID_DOCUMENT_KEY = "idDocument";
 
-    public static boolean saveCardCaptureResult(@NonNull Context context, @Nullable IDCaptureResult idCaptureResult) {
-        if (idCaptureResult == null) {
-            getSharedPreferences(context).edit().remove(CARD_CAPTURE_RESULT_KEY).apply();
+    public static boolean saveCapturedDocument(@NonNull Context context, @Nullable IDDocument idDocument) {
+        if (idDocument == null) {
+            getSharedPreferences(context).edit().remove(ID_DOCUMENT_KEY);
             return true;
         }
         try {
-            getSharedPreferences(context).edit().putString(CARD_CAPTURE_RESULT_KEY, idCaptureResult.toJson()).apply();
+            getSharedPreferences(context).edit().putString(ID_DOCUMENT_KEY, idDocument.getSerialized()).apply();
             return true;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -31,11 +31,11 @@ public class CardCaptureResultPersistence {
         }
     }
 
-    public static IDCaptureResult loadCardCaptureResult(@NonNull Context context) {
-        String resultString = getSharedPreferences(context).getString(CARD_CAPTURE_RESULT_KEY, null);
-        if (resultString != null) {
+    public static IDDocument loadCapturedDocument(@NonNull Context context) {
+        String docString = getSharedPreferences(context).getString(ID_DOCUMENT_KEY, null);
+        if (docString != null) {
             try {
-                return new IDCaptureResult(resultString);
+                return new IDDocument(docString);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
