@@ -1,5 +1,5 @@
 # Ver-ID Credentials SDK
-The Ver-ID ID Capture SDK allows your app to capture an image of the user's ID card and read the PDF 417 barcode on the back of the card. You can use Ver-ID to compare the face on the front of the ID card to a live selfie.
+The Ver-ID Credentials SDK allows your app to capture an image of the user's ID card and read the PDF 417 barcode on the back of the card. You can use Ver-ID to compare the face on the front of the ID card to a live selfie.
 
 ## Adding Ver-ID Credentials SDK in Your Android Studio Project
 
