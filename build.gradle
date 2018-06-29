@@ -14,15 +14,14 @@ buildscript {
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 26
 
     defaultConfig {
         applicationId "com.appliedrec.idcapturesample"
         minSdkVersion 18
-        targetSdkVersion 25
+        targetSdkVersion 26
         versionCode 1
-        versionName "3.0.0"
+        versionName "4.0.0"
 
     }
     buildTypes {
@@ -47,13 +46,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.appliedrec:shared:3.1.2'
-    implementation 'com.appliedrec:det-rec-lib:3.1.2'
-    implementation 'com.appliedrec:verid:3.1.2'
-    implementation 'com.appliedrec:id-capture:3.0.0'
-    implementation 'com.android.support:appcompat-v7:25.4.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.1'
-    implementation 'com.android.support:design:25.4.0'
+    implementation 'com.appliedrec:shared:4.0.0'
+    implementation 'com.appliedrec:det-rec-lib:4.0.0'
+    implementation 'com.appliedrec:verid:4.0.0'
+    implementation 'com.appliedrec:id-capture:4.0.0'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.android.support:design:26.1.0'
     implementation('com.microblink:blinkid:3.9.0@aar') {
         transitive = true
     }

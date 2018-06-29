@@ -2,6 +2,7 @@ package com.appliedrec.idcapturesample;
 
 import android.content.Intent;
 import android.graphics.RectF;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout heroLayout;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         loadingIndicatorView = findViewById(R.id.loading);
@@ -93,24 +94,36 @@ public class MainActivity extends AppCompatActivity {
                 heroLayout.addView(cardImageView, 0, layoutParams);
             }
         });
-        if (savedInstanceState != null) {
-            verIDSessionResult = savedInstanceState.getParcelable("verIDSessionResult");
-        }
-        // Load captured ID card result from shared preferences
-        idDocument = CardCaptureResultPersistence.loadCapturedDocument(this);
-        // Check that the card has a face that's suitable for recognition
-        if (idDocument != null && idDocument.getFaceSuitableForRecognition() == null) {
-            idDocument = null;
-            // Delete the card, it cannot be used for face recognition
-            CardCaptureResultPersistence.saveCapturedDocument(this, null);
-        }
-        updateContent();
         // Load Ver-ID
         VerID.shared.load(this, new VerID.LoadCallback() {
             @Override
             public void onLoad() {
                 if (!isDestroyed()) {
-                    setShowProgressBar(false);
+                    AsyncTask.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (savedInstanceState != null) {
+                                verIDSessionResult = savedInstanceState.getParcelable("verIDSessionResult");
+                            }
+                            // Load captured ID card result from shared preferences
+                            idDocument = CardCaptureResultPersistence.loadCapturedDocument(MainActivity.this);
+                            // Check that the card has a face that's suitable for recognition
+                            if (idDocument != null && idDocument.getFaceSuitableForRecognition() == null) {
+                                idDocument = null;
+                                // Delete the card, it cannot be used for face recognition
+                                CardCaptureResultPersistence.saveCapturedDocument(MainActivity.this, null);
+                            }
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (!isDestroyed()) {
+                                        setShowProgressBar(false);
+                                        updateContent();
+                                    }
+                                }
+                            });
+                        }
+                    });
                 }
             }
 

@@ -31,6 +31,7 @@ public class CardCaptureResultPersistence {
         }
     }
 
+    @Nullable
     public static IDDocument loadCapturedDocument(@NonNull Context context) {
         String docString = getSharedPreferences(context).getString(ID_DOCUMENT_KEY, null);
         if (docString != null) {

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Ver-ID ID Capture API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+</head>
+<body>
+<aside><h2>Classes</h2><ul><li><a href="com.appliedrec.ver_ididcapture.VerIDIDCaptureSettings.html">VerIDIDCaptureSettings</a></li><li><a href="com.appliedrec.ver_ididcapture.VerIDIDCaptureIntent.html">VerIDIDCaptureIntent</a></li><li><a href="com.appliedrec.ver_ididcapture.RegionUtil.html">RegionUtil</a></li><li><a href="com.appliedrec.ver_ididcapture.IDCaptureActivity.html">IDCaptureActivity</a></li><li><a href="com.appliedrec.ver_ididcapture.data.IDDocumentPage.html">IDDocumentPage</a></li><li><a href="com.appliedrec.ver_ididcapture.data.IDDocument.html">IDDocument</a></li><li><a href="com.appliedrec.ver_ididcapture.data.PDF417DocumentPage.html">PDF417DocumentPage</a></li></ul><h2>Enums</h2><ul><li><a href="com.appliedrec.ver_ididcapture.data.Region.html">Region</a></li></ul></aside>
+</body>
+</html>
+<h1>APIRequest</h1>
+<h4>Package com.appliedrec.ver_ididcapture.data</h4>
+<code>public class  APIRequest</code>
+<ul class="ancestry"><li>com.appliedrec.ver_ididcapture.data.APIRequest
+<ul class="ancestry"><li>java.lang.Object
+</li></ul>
+</li></ul>
+<section><h2>Constructor</h2><dl>
+<dt><h3><a name="APIRequest()">APIRequest</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public APIRequest()</code>
+
+</dd>
+</dl></section>
+<section><h2>Methods</h2><dl>
+<dt><h3><a name="createCreateRequest(String, Region)">createCreateRequest</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public static createCreateRequest(String, Region)</code>
+<h4>Parameters</h4>
+<dl>
+<dt>apiKey <code>java.lang.String</code></dt>
+<dt>region <code><a href="com.appliedrec.ver_ididcapture.data.Region.html">com.appliedrec.ver_ididcapture.data.Region</a></code></dt>
+</dl>
+<h4>Returns</h4>
+<dl>
+<dt><code><a href="com.appliedrec.ver_ididcapture.data.APIRequest.html">com.appliedrec.ver_ididcapture.data.APIRequest</a></code></dt>
+</dl>
+
+</dd>
+<dt><h3><a name="createUploadImage(String, String, APIRequest.UploadType, byte[])">createUploadImage</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public static createUploadImage(String, String, APIRequest.UploadType, byte[])</code>
+<h4>Parameters</h4>
+<dl>
+<dt>apiKey <code>java.lang.String</code></dt>
+<dt>sessionId <code>java.lang.String</code></dt>
+<dt>type <code><a href="com.appliedrec.ver_ididcapture.data.APIRequest.UploadType.html">com.appliedrec.ver_ididcapture.data.APIRequest.UploadType</a></code></dt>
+<dt>jpeg <code>byte[]</code></dt>
+</dl>
+<h4>Returns</h4>
+<dl>
+<dt><code><a href="com.appliedrec.ver_ididcapture.data.APIRequest.html">com.appliedrec.ver_ididcapture.data.APIRequest</a></code></dt>
+</dl>
+
+</dd>
+<dt><h3><a name="createProcessRequest(String, String)">createProcessRequest</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public static createProcessRequest(String, String)</code>
+<h4>Parameters</h4>
+<dl>
+<dt>apiKey <code>java.lang.String</code></dt>
+<dt>sessionId <code>java.lang.String</code></dt>
+</dl>
+<h4>Returns</h4>
+<dl>
+<dt><code><a href="com.appliedrec.ver_ididcapture.data.APIRequest.html">com.appliedrec.ver_ididcapture.data.APIRequest</a></code></dt>
+</dl>
+
+</dd>
+</dl></section>
+<section><h2>Properties</h2><dl>
+<dt><h3><a name="apiKey">apiKey</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public String apiKey</code>
+
+</dd>
+<dt><h3><a name="path">path</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public String path</code>
+
+</dd>
+<dt><h3><a name="content">content</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public byte[] content</code>
+
+</dd>
+<dt><h3><a name="method">method</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public String method</code>
+
+</dd>
+<dt><h3><a name="contentType">contentType</a></h3><p>Introduced in version </p></dt>
+<dd>
+<code>public String contentType</code>
+
+</dd>
+</dl></section>

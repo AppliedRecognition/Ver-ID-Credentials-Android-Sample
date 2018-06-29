@@ -15,16 +15,16 @@ The Ver-ID ID Capture SDK allows your app to capture an image of the user's ID c
 1. Under `dependencies` add
 
 	```
-	implementation 'com.appliedrec:shared:3.1.2'
-	implementation 'com.appliedrec:det-rec-lib:3.1.2'
-	implementation 'com.appliedrec:verid:3.1.2'
-	implementation 'com.appliedrec:id-capture:3.0.0'
+	implementation 'com.appliedrec:shared:4.0.0'
+	implementation 'com.appliedrec:det-rec-lib:4.0.0'
+	implementation 'com.appliedrec:verid:4.0.0'
+	implementation 'com.appliedrec:id-capture:4.0.0'
 	implementation('com.microblink:blinkid:3.9.0@aar') {
 		transitive = true
 	}
-	implementation 'com.android.support:appcompat-v7:25.4.0'
-	implementation 'com.android.support.constraint:constraint-layout:1.1.1'
-	implementation 'com.android.support:design:25.4.0'
+	implementation 'com.android.support:appcompat-v7:26.1.0'
+	implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+	implementation 'com.android.support:design:26.1.0'
 	```
 	
 ## Getting Started with the Ver-ID ID Capture API
@@ -102,37 +102,43 @@ public class MyActivity extends AppCompatActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == REQUEST_CODE_ID_CAPTURE && resultCode == RESULT_OK && data != null) {
 			// Extract the ID capture result from the data intent
-			IDCaptureResult idCaptureResult = data.getParcelable(IDCaptureActivity.EXTRA_RESULT);
-			if (idCaptureResult != null) {			
-				/**
-				 * Display the card
-				 */
-				((ImageView)findViewById(R.id.cardImageView)).setImageURI(idCaptureResult.getFrontImageUri());
-			
-				// Get the bounds of the face detected on the ID card
-				Rect faceBounds = new Rect();
-				idCaptureResult.getFaceBounds().round(faceBounds);
-				// Load the image of the front of the card
-				InputStream inputStream = getContentResolver().openInputStream(idCaptureResult.getFrontImageUri());
-				try {
-					Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
-					if (cardBitmap != null) {
-						// Crop the card image to the face bounds
-						Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
-						
-						/**
-						 * Display the face
-						 */
-						((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
-					}
-				} catch (FileNotFoundException e) {
-				}
-				
-				/**
-				 * Display the text from the card
-				 */
-				((TextView)findViewById(R.id.cardTextView)).setText(idCaptureResult.getTextDescription());
+			IDDocument document = data.getParcelable(IDCaptureActivity.EXTRA_ID_DOCUMENT);
+			if (document == null) {	
+				return;
 			}
+			Uri imageUri = document.getImageUri();
+			VerIDFace face = document.getFace();
+			if (imageUri == null || face == null) {
+				return;
+			}
+			/**
+			 * Display the card
+			 */
+			((ImageView)findViewById(R.id.cardImageView)).setImageURI(imageUri);
+		
+			// Get the bounds of the face detected on the ID card
+			Rect faceBounds = new Rect();
+			face.getBoundingBox().round(faceBounds);
+			// Load the image of the front of the card
+			InputStream inputStream = getContentResolver().openInputStream(imageUri);
+			try {
+				Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
+				if (cardBitmap != null) {
+					// Crop the card image to the face bounds
+					Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
+					
+					/**
+					 * Display the face
+					 */
+					((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
+				}
+			} catch (FileNotFoundException e) {
+			}
+			
+			/**
+			 * Display the text from the card
+			 */
+			((TextView)findViewById(R.id.cardTextView)).setText(document.getDescription());
 		}
 	}
 }
@@ -193,29 +199,31 @@ public class MyActivity extends AppCompatActivity {
 		if (requestCode == REQUEST_CODE_LIVENESS_DETECTION && resultCode == RESULT_OK && data != null) {
 			// Extract the liveness detection session result from the data intent
 			VerIDSessionResult verIDSessionResult = data.getParcelableExtra(VerIDActivity.EXTRA_SESSION_RESULT);
-			if (verIDSessionResult != null && verIDSessionResult.isPositive()) {
-				// Get the face and image URI of the first captured selfie
-				HashMap<IFace,Uri> faceImages = verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT);
-				if (!faceImages.isEmpty()) {
-					Map.Entry<IFace,Uri> faceImage = faceImages.entrySet().iterator().next();
-					// Get the bounds of the face detected in the first selfie
-					Rect faceBounds = new Rect();
-					faceImage.getKey().getBounds().round(faceBounds);
-					InputStream inputStream = getContentResolver().openInputStream(imageUri);
-					try {
-						Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
-						if (cardBitmap != null) {
-							// Crop the selfie to the face bounds
-							Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
-							
-							/**
-							 * Display the face
-							 */
-							((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
-						}
-					} catch (FileNotFoundException e) {
-					}
+			if (verIDSessionResult == null || !verIDSessionResult.isPositive()) {
+				return;
+			}
+			// Get the face and image URI of the first captured selfie
+			HashMap<VerIDFace,Uri> faceImages = verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT);
+			if (faceImages.isEmpty()) {
+				return;
+			}
+			Map.Entry<VerIDFace,Uri> faceImage = faceImages.entrySet().iterator().next();
+			// Get the bounds of the face detected in the first selfie
+			Rect faceBounds = new Rect();
+			faceImage.getKey().getBoundingBox().round(faceBounds);
+			InputStream inputStream = getContentResolver().openInputStream(imageUri);
+			try {
+				Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
+				if (cardBitmap != null) {
+					// Crop the selfie to the face bounds
+					Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
+					
+					/**
+					 * Display the face
+					 */
+					((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
 				}
+			} catch (FileNotFoundException e) {
 			}
 		}
 	}	
@@ -224,7 +232,7 @@ public class MyActivity extends AppCompatActivity {
 
 ## Example 3 - Compare Face on ID Card with Live Face
 
-Building on example 1 and 2, you can use the results of the ID capture and liveness detection sessions and compare their faces. The activity below contains two `AsyncTaskLoader` classes that extract the bitmaps from the results and run the face comparison.
+Building on example 1 and 2, you can use the results of the ID capture and liveness detection sessions and compare their faces.
 
 **Important:** When requesting the live face you must set `includeFaceTemplatesInResult` of the `VerIDLivenessDetectionSessionSettings` and `detectFaceForRecognition` of the `VerIDIDCaptureSettings` object to `true` to extract the captured face template and make it available for recognition.
 
@@ -233,7 +241,7 @@ public class CaptureResultActivity extends AppCompatActivity {
 
     // Live face and ID capture results
     private VerIDSessionResult livenessDetectionResult;
-    private IDCaptureResult idCaptureResult;
+    private IDDocument document;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -241,7 +249,11 @@ public class CaptureResultActivity extends AppCompatActivity {
         // Set up views
         // Obtain idCaptureResult and livenessDetectionResult, e.g. from intent parcelable
         // ...
-        if (idCaptureResult != null && idCaptureResult.getFace() != null && idCaptureResult.getFace().isSuitableForRecognition() && livenessDetectionResult != null && livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT).length > 0) {
+        if (document == null || livenessDetectionResult == null) {
+	        updateScore(null);
+        }
+        
+        if (document.getFaceSuitableForRecognition() != null && livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT).length > 0) {
             compareFaceTemplates();
             return;
         }
@@ -249,22 +261,33 @@ public class CaptureResultActivity extends AppCompatActivity {
     }
 
     private void compareFaceTemplates() {
-        Float score = null;
-        IFace[] cardFace = idCaptureResult.getFace();
-        IFace[] liveFaces = livenessDetectionResult.getRecognitionFaces(VerID.Bearing.STRAIGHT);
-        for (IFace face : liveFaces) {
-            try {
-                float faceScore = FaceUtil.compareFaces(cardFace, face);
-                if (score == null) {
-                    score = faceScore;
-                } else {
-                    score = Math.max(faceScore, score);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        updateScore(score);
+    	AsyncTask.execute(new Runnable() {
+    		@Override
+    		public void run() {
+    			Float score = null;
+		        VerIDFace cardFace = document.getFaceSuitableForRecognition();
+		        VerIDFace[] liveFaces = livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT);
+		        for (VerIDFace face : liveFaces) {
+		            try {
+		                float faceScore = FaceUtil.compareFaces(cardFace, face);
+		                if (score == null) {
+		                    score = faceScore;
+		                } else {
+		                    score = Math.max(faceScore, score);
+		                }
+		            } catch (Exception e) {
+		                e.printStackTrace();
+		            }
+		        }
+		        final Float finalScore = score;
+		        runOnUiThread(new Runnable() {
+		        	@Override
+		        	public void run() {
+			        	updateScore(finalScore);
+			        }
+		        });
+    		}
+		});
     }
 
     @UiThread
