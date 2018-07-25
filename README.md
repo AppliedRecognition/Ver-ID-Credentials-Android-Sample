@@ -15,10 +15,10 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 1. Under `dependencies` add
 
 	```
-	implementation 'com.appliedrec:shared:4.0.0'
-	implementation 'com.appliedrec:det-rec-lib:4.0.0'
-	implementation 'com.appliedrec:verid:4.0.0'
-	implementation 'com.appliedrec:id-capture:4.0.0'
+	implementation 'com.appliedrec:shared:4.1.0'
+	implementation 'com.appliedrec:det-rec-lib:4.1.0'
+	implementation 'com.appliedrec:verid:4.1.0'
+	implementation 'com.appliedrec:id-capture:4.0.1'
 	implementation('com.microblink:blinkid:3.9.0@aar') {
 		transitive = true
 	}
