@@ -15,15 +15,15 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 1. Under `dependencies` add
 
 	```
-	implementation 'com.appliedrec:shared:4.1.0'
-	implementation 'com.appliedrec:det-rec-lib:4.1.0'
-	implementation 'com.appliedrec:verid:4.1.0'
-	implementation 'com.appliedrec:id-capture:4.0.1'
+	implementation 'com.appliedrec:shared:4.3.3'
+	implementation 'com.appliedrec:det-rec-lib:4.3.3'
+	implementation 'com.appliedrec:verid:4.3.3'
+	implementation 'com.appliedrec:id-capture:4.0.2'
 	implementation('com.microblink:blinkid:3.9.0@aar') {
 		transitive = true
 	}
 	implementation 'com.android.support:appcompat-v7:26.1.0'
-	implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+	implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 	implementation 'com.android.support:design:26.1.0'
 	```
 	
