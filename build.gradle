@@ -47,14 +47,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.appliedrec:shared:4.3.3'
-    implementation 'com.appliedrec:det-rec-lib:4.3.3'
-    implementation 'com.appliedrec:verid:4.3.3'
-    implementation 'com.appliedrec:id-capture:4.0.2'
+    implementation 'com.appliedrec:id-capture:4.0.3'
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:design:26.1.0'
-    implementation('com.microblink:blinkid:3.9.0@aar') {
-        transitive = true
-    }
 }

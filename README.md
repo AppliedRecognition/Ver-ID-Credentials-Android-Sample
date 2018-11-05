@@ -4,29 +4,34 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 ## Adding Ver-ID Credentials SDK in Your Android Studio Project
 
 1. [Request an API secret](https://dev.ver-id.com/admin/register) for your app.
-2. Open your app module's **gradle.build** file.
+1. Open your app module's **gradle.build** file.
 1. Under `repositories` add
 
-	```
-	jcenter()
-	maven { url 'http://maven.microblink.com' }
-	maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
-	```
+    ```
+    jcenter()
+    maven { url 'http://maven.microblink.com' }
+    maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
+    ```
 1. Under `dependencies` add
 
-	```
-	implementation 'com.appliedrec:shared:4.3.3'
-	implementation 'com.appliedrec:det-rec-lib:4.3.3'
-	implementation 'com.appliedrec:verid:4.3.3'
-	implementation 'com.appliedrec:id-capture:4.0.2'
-	implementation('com.microblink:blinkid:3.9.0@aar') {
-		transitive = true
-	}
-	implementation 'com.android.support:appcompat-v7:26.1.0'
-	implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-	implementation 'com.android.support:design:26.1.0'
-	```
-	
+    ```
+    implementation 'com.appliedrec:id-capture:4.0.3'
+    ```
+1. Open your app's **AndroidManifest.xml** file and add the following tag in `<application>` replacing `[your API secret]` with the API secret your received in step 1:
+
+    ~~~xml
+    <meta-data
+        android:name="com.appliedrec.verid.apiSecret"
+        android:value="[your API secret]" />
+    ~~~
+1. [Download resources archive](https://github.com/AppliedRecognition/Ver-ID-Android-Sample/blob/master/src/main/assets/VerIDModels.zip) and put it in your app's **assets** folder.
+1. As an alternative to the previous step, specify a URL from which to download the resources. This will reduce the download size of your app. In the app's manifest file:
+
+    ~~~xml
+    <meta-data
+        android:name="com.appliedrec.verid.resourcesURL"
+        android:value="http://my.domain.com/path/to/resources.zip" />
+	~~~
 ## Getting Started with the Ver-ID Credentials API
 To scan an ID card your app will start an activity with a Ver-ID ID Capture intent and receive the result in `onActivityResult`.
 
@@ -67,7 +72,7 @@ public class MyActivity extends AppCompatActivity {
 		// Unload Ver-ID when your activity gets destroyed
 		VerID.shared.unload();
 	}
-	
+
 	/**
 	 * Call this method to start the ID capture 
 	 * (for example in response to a button click).
