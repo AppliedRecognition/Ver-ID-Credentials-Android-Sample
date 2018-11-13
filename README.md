@@ -24,7 +24,7 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
         android:name="com.appliedrec.verid.apiSecret"
         android:value="[your API secret]" />
     ~~~
-1. [Download resources archive](https://github.com/AppliedRecognition/Ver-ID-Android-Sample/blob/master/src/main/assets/VerIDModels.zip) and put it in your app's **assets** folder.
+1. [Download resources archive](https://ver-id.s3.amazonaws.com/resources/models/v1/VerIDModels.zip) and put it in your app's **assets** folder.
 1. As an alternative to the previous step, specify a URL from which to download the resources. This will reduce the download size of your app. In the app's manifest file:
 
     ~~~xml
