@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         loadingIndicatorView = findViewById(R.id.loading);
-        scanIdButton = (Button) findViewById(R.id.register);
+        scanIdButton = findViewById(R.id.register);
         scanIdButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE_CARD);
             }
         });
-        liveFaceCompareButton = (Button) findViewById(R.id.authenticate);
+        liveFaceCompareButton = findViewById(R.id.authenticate);
         liveFaceCompareButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         cardImageView = new ImageView(this);
         cardImageView.setVisibility(View.GONE);
         scrollView = findViewById(R.id.scrollView);
-        heroLayout = (FrameLayout) findViewById(com.appliedrec.ver_ididcapture.R.id.hero);
+        heroLayout = findViewById(com.appliedrec.ver_ididcapture.R.id.hero);
         heroLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {

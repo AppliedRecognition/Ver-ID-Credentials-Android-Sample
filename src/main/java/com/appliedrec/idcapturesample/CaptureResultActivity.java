@@ -125,10 +125,10 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_capture_result);
-        liveFaceView = (ImageView) findViewById(R.id.live_face);
-        cardFaceView = (ImageView) findViewById(R.id.card_face);
-        resultTextView = (TextView) findViewById(R.id.text);
-        likenessGaugeView = (LikenessGaugeView) findViewById(R.id.likeness_gauge);
+        liveFaceView = findViewById(R.id.live_face);
+        cardFaceView = findViewById(R.id.card_face);
+        resultTextView = findViewById(R.id.text);
+        likenessGaugeView = findViewById(R.id.likeness_gauge);
         idDocument = CardCaptureResultPersistence.loadCapturedDocument(this);
         Intent intent = getIntent();
         if (idDocument != null && idDocument.getFaceSuitableForRecognition() != null && intent != null) {
