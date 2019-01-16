@@ -8,7 +8,7 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:3.2.1'
     }
 }
 
@@ -22,7 +22,7 @@ android {
         minSdkVersion 18
         targetSdkVersion 26
         versionCode 1
-        versionName "4.0.2"
+        versionName "4.1.0"
 
     }
     buildTypes {
@@ -47,7 +47,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.appliedrec:id-capture:4.0.3'
+    implementation 'com.appliedrec:id-capture:4.1.0'
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }
