@@ -15,7 +15,7 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 1. Under `dependencies` add
 
     ```
-    implementation 'com.appliedrec:id-capture:4.0.3'
+    implementation 'com.appliedrec:id-capture:4.1.0'
     ```
 1. Open your app's **AndroidManifest.xml** file and add the following tag in `<application>` replacing `[your API secret]` with the API secret your received in step 1:
 
