@@ -2,6 +2,7 @@ package com.appliedrec.idcapturesample;
 
 import android.content.Intent;
 import android.graphics.RectF;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,10 +30,15 @@ import com.appliedrec.ver_ididcapture.VerIDIDCapture;
 import com.appliedrec.ver_ididcapture.VerIDIDCaptureIntent;
 import com.appliedrec.ver_ididcapture.VerIDIDCaptureSettings;
 import com.appliedrec.ver_ididcapture.data.IDDocument;
-import com.appliedrec.ver_ididcapture.data.Region;
+import com.appliedrec.ver_ididcapture.data.Page;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -63,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Start the ID card scan
                 verIDSessionResult = null;
-                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(Region.GENERAL, true, true, true);
+                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings((IDDocument)null, true, true, true);
                 Intent intent = new VerIDIDCaptureIntent(MainActivity.this, settings);
                 startActivityForResult(intent, REQUEST_CODE_CARD);
             }
@@ -108,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
                             // Load captured ID card result from shared preferences
                             idDocument = CardCaptureResultPersistence.loadCapturedDocument(MainActivity.this);
                             // Check that the card has a face that's suitable for recognition
-                            if (idDocument != null && idDocument.getFaceSuitableForRecognition() == null) {
+                            if (idDocument != null && idDocument.getFaceTemplate() == null) {
                                 idDocument = null;
                                 // Delete the card, it cannot be used for face recognition
                                 CardCaptureResultPersistence.saveCapturedDocument(MainActivity.this, null);
@@ -156,7 +162,34 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_CARD && resultCode == RESULT_OK && data != null) {
             // Received an ID card
             idDocument = data.getParcelableExtra(IDCaptureActivity.EXTRA_ID_DOCUMENT);
-            if (idDocument != null && idDocument.getFaceSuitableForRecognition() != null) {
+            if (idDocument != null && idDocument.getFaceTemplate() != null) {
+                File cardImageFile = new File(getFilesDir(), "idcard.jpg");
+                for (Page page : idDocument.getPages()) {
+                    if (page.getImageUri() != null) {
+                        try {
+                            InputStream inputStream = new FileInputStream(page.getImageUri().getPath());
+                            try {
+                                OutputStream outputStream = new FileOutputStream(cardImageFile);
+                                try {
+                                    int read;
+                                    byte[] buffer = new byte[512];
+                                    while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
+                                        outputStream.write(buffer, 0, read);
+                                    }
+                                    page.setImageUri(Uri.fromFile(cardImageFile));
+                                } catch (IOException e) {
+                                } finally {
+                                    outputStream.close();
+                                }
+                            } catch (IOException e) {
+                            } finally {
+                                inputStream.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 // Save the card to shared preferences
                 CardCaptureResultPersistence.saveCapturedDocument(this, idDocument);
             } else {
@@ -200,8 +233,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void deleteIdCaptureResult() {
         if (idDocument != null) {
-            VerIDIDCapture.shared.load(this);
-            VerIDIDCapture.shared.deleteIDDocument(idDocument);
             idDocument = null;
             CardCaptureResultPersistence.saveCapturedDocument(this, null);
         }
@@ -213,18 +244,20 @@ public class MainActivity extends AppCompatActivity {
         cardImageView.setVisibility(idDocument != null ? View.VISIBLE : View.GONE);
         cardImageView.setImageDrawable(null);
         if (idDocument != null) {
-            if (Build.VERSION.SDK_INT >= 21) {
-                try {
-                    InputStream inputStream = getContentResolver().openInputStream(idDocument.getImageUri());
-                    RoundedBitmapDrawable bitmapDrawable = RoundedBitmapDrawableFactory.create(getResources(), inputStream);
-                    bitmapDrawable.setCornerRadius((float)bitmapDrawable.getIntrinsicHeight() / 20f);
-                    cardImageView.setImageDrawable(bitmapDrawable);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+            if (idDocument.getImageUri() != null) {
+                if (Build.VERSION.SDK_INT >= 21) {
+                    try {
+                        InputStream inputStream = getContentResolver().openInputStream(idDocument.getImageUri());
+                        RoundedBitmapDrawable bitmapDrawable = RoundedBitmapDrawableFactory.create(getResources(), inputStream);
+                        bitmapDrawable.setCornerRadius((float) bitmapDrawable.getIntrinsicHeight() / 20f);
+                        cardImageView.setImageDrawable(bitmapDrawable);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        cardImageView.setImageURI(idDocument.getImageUri());
+                    }
+                } else {
                     cardImageView.setImageURI(idDocument.getImageUri());
                 }
-            } else {
-                cardImageView.setImageURI(idDocument.getImageUri());
             }
             scrollView.setVisibility(View.GONE);
         } else {
@@ -240,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void compareLiveFace() {
         // Ensure we have a valid ID capture result to compare the selfie to
-        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFaceSuitableForRecognition() != null) {
+        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFaceTemplate() != null) {
             Intent intent = new Intent(this, CaptureResultActivity.class);
             intent.putExtra(CaptureResultActivity.EXTRA_LIVENESS_DETECTION_RESULT, verIDSessionResult);
             startActivity(intent);

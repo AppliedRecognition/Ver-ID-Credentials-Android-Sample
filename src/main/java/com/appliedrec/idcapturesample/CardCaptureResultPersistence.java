@@ -6,6 +6,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.appliedrec.ver_ididcapture.data.IDDocument;
+import com.appliedrec.ver_ididcapture.data.IDDocumentCoder;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONException;
 
@@ -23,10 +26,11 @@ public class CardCaptureResultPersistence {
             return true;
         }
         try {
-            getSharedPreferences(context).edit().putString(ID_DOCUMENT_KEY, idDocument.getSerialized()).apply();
+            Gson gson = new GsonBuilder().registerTypeAdapter(IDDocument.class, new IDDocumentCoder()).create();
+            String json = gson.toJson(idDocument);
+            getSharedPreferences(context).edit().putString(ID_DOCUMENT_KEY, json).apply();
             return true;
-        } catch (JSONException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             return false;
         }
     }
@@ -36,9 +40,11 @@ public class CardCaptureResultPersistence {
         String docString = getSharedPreferences(context).getString(ID_DOCUMENT_KEY, null);
         if (docString != null) {
             try {
-                return new IDDocument(docString);
-            } catch (JSONException e) {
-                e.printStackTrace();
+                Gson gson = new GsonBuilder().registerTypeAdapter(IDDocument.class, new IDDocumentCoder()).create();
+                IDDocument document = gson.fromJson(docString, IDDocument.class);
+                return document;
+            } catch (Exception e) {
+                return null;
             }
         }
         return null;
