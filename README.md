@@ -1,3 +1,5 @@
+![Maven metadata URL](https://img.shields.io/maven-metadata/v/https/dev.ver-id.com/artifactory/gradle-release/com/appliedrec/id-capture/maven-metadata.xml.svg)
+
 # Ver-ID Credentials SDK
 The Ver-ID Credentials SDK allows your app to capture an image of the user's ID card and read the PDF 417 barcode on the back of the card. You can use Ver-ID to compare the face on the front of the ID card to a live selfie.
 
@@ -15,7 +17,7 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 1. Under `dependencies` add
 
     ```
-    implementation 'com.appliedrec:id-capture:5.0.1'
+    implementation 'com.appliedrec:id-capture:5.0.4'
     ```
 1. Under `android/defaultConfig` add
 
