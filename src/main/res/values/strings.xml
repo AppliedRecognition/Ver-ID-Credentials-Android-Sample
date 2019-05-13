@@ -11,6 +11,7 @@
     <string name="live_face_capture_failed">Live face capture failed</string>
     <string name="failed_to_detect_face">Failed to detect a face</string>
     <string name="verid_failed_to_load">Ver-ID failed to load</string>
-    <string name="similarity_score">Similarity score <xliff:g id="score" example="7.9/10">%1$.1f/10</xliff:g></string>
+    <string name="similarity_score">Similarity score <xliff:g example="3.9" id="score">%1$.1f</xliff:g></string>
     <string name="loading">Loading</string>
+    <string name="card_properties">Card Properties</string>
 </resources>

@@ -1,10 +1,12 @@
 package com.appliedrec.idcapturesample;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
@@ -19,28 +21,29 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.appliedrec.ver_id.VerID;
-import com.appliedrec.ver_id.VerIDLivenessDetectionIntent;
-import com.appliedrec.ver_id.session.VerIDLivenessDetectionSessionSettings;
-import com.appliedrec.ver_id.session.VerIDSessionResult;
-import com.appliedrec.ver_id.ui.VerIDActivity;
-import com.appliedrec.ver_ididcapture.CardOverlayView;
-import com.appliedrec.ver_ididcapture.IDCaptureActivity;
-import com.appliedrec.ver_ididcapture.VerIDIDCapture;
-import com.appliedrec.ver_ididcapture.VerIDIDCaptureIntent;
-import com.appliedrec.ver_ididcapture.VerIDIDCaptureSettings;
-import com.appliedrec.ver_ididcapture.data.IDDocument;
-import com.appliedrec.ver_ididcapture.data.Page;
+import com.appliedrec.verid.core.Bearing;
+import com.appliedrec.verid.core.LivenessDetectionSessionSettings;
+import com.appliedrec.verid.core.VerID;
+import com.appliedrec.verid.core.VerIDFactory;
+import com.appliedrec.verid.core.VerIDFactoryDelegate;
+import com.appliedrec.verid.core.VerIDSessionResult;
+import com.appliedrec.verid.credentials.CardOverlayView;
+import com.appliedrec.verid.credentials.FacePhotoFeature;
+import com.appliedrec.verid.credentials.IDCaptureSessionActivity;
+import com.appliedrec.verid.credentials.IDDocument;
+import com.appliedrec.verid.credentials.IDFeature;
+import com.appliedrec.verid.credentials.Page;
+import com.appliedrec.verid.ui.VerIDSessionActivity;
+import com.appliedrec.verid.ui.VerIDSessionIntent;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements VerIDFactoryDelegate {
 
     // Collected data
     IDDocument idDocument;
@@ -57,11 +60,15 @@ public class MainActivity extends AppCompatActivity {
     private ImageView cardImageView;
     private View scrollView;
     private FrameLayout heroLayout;
+    private VerID verID;
+    private Uri cardImageUri;
+    private File defaultCardImageFile;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        defaultCardImageFile = new File(getFilesDir(), "idcard.jpg");
         loadingIndicatorView = findViewById(R.id.loading);
         scanIdButton = findViewById(R.id.register);
         scanIdButton.setOnClickListener(new View.OnClickListener() {
@@ -69,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Start the ID card scan
                 verIDSessionResult = null;
-                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings((IDDocument)null, true, true, true);
-                Intent intent = new VerIDIDCaptureIntent(MainActivity.this, settings);
+                Intent intent = new Intent(MainActivity.this, CardPropertiesActivity.class);
+                intent.putExtra(IDCaptureSessionActivity.EXTRA_VERID_INSTANCE_ID, verID.getInstanceId());
                 startActivityForResult(intent, REQUEST_CODE_CARD);
             }
         });
@@ -79,18 +86,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Collect a live selfie and compare it to the face on the ID card
-                VerIDLivenessDetectionSessionSettings sessionSettings = new VerIDLivenessDetectionSessionSettings();
-                sessionSettings.expiryTime = 120000;
+                LivenessDetectionSessionSettings sessionSettings = new LivenessDetectionSessionSettings();
+                sessionSettings.setExpiryTime(120000);
                 // Ask Ver-ID to extract face templates needed for face recognition
-                sessionSettings.includeFaceTemplatesInResult = true;
-                Intent intent = new VerIDLivenessDetectionIntent(MainActivity.this, sessionSettings);
+                sessionSettings.setIncludeFaceTemplatesInResult(true);
+                Intent intent = new VerIDSessionIntent<>(MainActivity.this, verID, sessionSettings);
                 startActivityForResult(intent, REQUEST_CODE_FACE);
             }
         });
         cardImageView = new ImageView(this);
         cardImageView.setVisibility(View.GONE);
         scrollView = findViewById(R.id.scrollView);
-        heroLayout = findViewById(com.appliedrec.ver_ididcapture.R.id.hero);
+        heroLayout = findViewById(R.id.hero);
         heroLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -101,51 +108,60 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         // Load Ver-ID
-        VerID.shared.load(this, new VerID.LoadCallback() {
-            @Override
-            public void onLoad() {
-                if (!isDestroyed()) {
-                    AsyncTask.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (savedInstanceState != null) {
-                                verIDSessionResult = savedInstanceState.getParcelable("verIDSessionResult");
-                            }
-                            // Load captured ID card result from shared preferences
-                            idDocument = CardCaptureResultPersistence.loadCapturedDocument(MainActivity.this);
-                            // Check that the card has a face that's suitable for recognition
-                            if (idDocument != null && idDocument.getFaceTemplate() == null) {
-                                idDocument = null;
-                                // Delete the card, it cannot be used for face recognition
-                                CardCaptureResultPersistence.saveCapturedDocument(MainActivity.this, null);
-                            }
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (!isDestroyed()) {
-                                        setShowProgressBar(false);
-                                        updateContent();
-                                    }
-                                }
-                            });
-                        }
-                    });
+        if (savedInstanceState != null) {
+            int veridInstanceId = savedInstanceState.getInt("veridInstanceId", -1);
+            if (veridInstanceId > -1) {
+                try {
+                    verID = VerID.getInstance(veridInstanceId);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-
-            @Override
-            public void onError(Exception error) {
-                loadingIndicatorView.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Cleanup
-        VerID.shared.unload();
+        }
+        if (verID == null) {
+            VerIDFactory verIDFactory = new VerIDFactory(this, this);
+            verIDFactory.createVerID();
+        } else {
+            onVerIDLoaded();
+        }
+//        VerID.shared.load(this, new VerID.LoadCallback() {
+//            @Override
+//            public void onLoad() {
+//                if (!isDestroyed()) {
+//                    AsyncTask.execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            if (savedInstanceState != null) {
+//                                verIDSessionResult = savedInstanceState.getParcelable("verIDSessionResult");
+//                            }
+//                            // Load captured ID card result from shared preferences
+//                            idDocument = CardCaptureResultPersistence.loadCapturedDocument(MainActivity.this);
+//                            // Check that the card has a face that's suitable for recognition
+//                            if (idDocument != null && idDocument.getFaceTemplate() == null) {
+//                                idDocument = null;
+//                                // Delete the card, it cannot be used for face recognition
+//                                CardCaptureResultPersistence.saveCapturedDocument(MainActivity.this, null);
+//                            }
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    if (!isDestroyed()) {
+//                                        setShowProgressBar(false);
+//                                        updateContent();
+//                                    }
+//                                }
+//                            });
+//                        }
+//                    });
+//                }
+//            }
+//
+//            @Override
+//            public void onError(Exception error) {
+//                loadingIndicatorView.setVisibility(View.GONE);
+//                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
+//            }
+//        });
     }
 
     @Override
@@ -154,6 +170,9 @@ public class MainActivity extends AppCompatActivity {
         if (verIDSessionResult != null) {
             outState.putParcelable("verIDSessionResult", verIDSessionResult);
         }
+        if (verID != null) {
+            outState.putLong("veridInstanceId", verID.getInstanceId());
+        }
     }
 
     @Override
@@ -161,52 +180,66 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_CARD && resultCode == RESULT_OK && data != null) {
             // Received an ID card
-            idDocument = data.getParcelableExtra(IDCaptureActivity.EXTRA_ID_DOCUMENT);
-            if (idDocument != null && idDocument.getFaceTemplate() != null) {
-                File cardImageFile = new File(getFilesDir(), "idcard.jpg");
-                for (Page page : idDocument.getPages()) {
-                    if (page.getImageUri() != null) {
-                        try {
-                            InputStream inputStream = new FileInputStream(page.getImageUri().getPath());
-                            try {
-                                OutputStream outputStream = new FileOutputStream(cardImageFile);
+            idDocument = data.getParcelableExtra(IDCaptureSessionActivity.EXTRA_DOCUMENT);
+            if (idDocument != null) {
+                AsyncTask.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        final File cardImageFile = defaultCardImageFile;
+                        for (Page page : idDocument.getPages()) {
+                            if (page.getImageUri() != null) {
                                 try {
-                                    int read;
-                                    byte[] buffer = new byte[512];
-                                    while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
-                                        outputStream.write(buffer, 0, read);
+                                    InputStream inputStream = getContentResolver().openInputStream(page.getImageUri());
+                                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                                    for (IDFeature feature : page.getFeatures()) {
+                                        if (feature instanceof FacePhotoFeature) {
+                                            Rect bounds = new Rect();
+                                            feature.getBounds().round(bounds);
+                                            // Crop image to face
+                                            bitmap = Bitmap.createBitmap(bitmap, bounds.left, bounds.top, bounds.width(), bounds.height());
+                                            break;
+                                        }
                                     }
-                                    page.setImageUri(Uri.fromFile(cardImageFile));
+                                    try {
+                                        OutputStream outputStream = new FileOutputStream(cardImageFile);
+                                        try {
+                                            bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream);
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    cardImageUri = Uri.fromFile(cardImageFile);
+                                                    updateContent();
+                                                }
+                                            });
+                                        } catch (Exception e) {
+                                        } finally {
+                                            outputStream.close();
+                                        }
+                                    } catch (IOException e) {
+                                    } finally {
+                                        inputStream.close();
+                                    }
                                 } catch (IOException e) {
-                                } finally {
-                                    outputStream.close();
+                                    e.printStackTrace();
                                 }
-                            } catch (IOException e) {
-                            } finally {
-                                inputStream.close();
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
                     }
-                }
+                });
                 // Save the card to shared preferences
                 CardCaptureResultPersistence.saveCapturedDocument(this, idDocument);
             } else {
                 idDocument = null;
+                cardImageUri = null;
+                updateContent();
             }
-            updateContent();
         } else if (requestCode == REQUEST_CODE_FACE && resultCode == RESULT_OK && data != null) {
             // Received a selfie response
-            verIDSessionResult = data.getParcelableExtra(VerIDActivity.EXTRA_SESSION_RESULT);
+            verIDSessionResult = data.getParcelableExtra(VerIDSessionActivity.EXTRA_RESULT);
             if (verIDSessionResult != null) {
-                if (verIDSessionResult.isPositive()) {
+                if (verIDSessionResult.getError() == null) {
                     // Compare the selfie with the face on the ID card
                     compareLiveFace();
-                    return;
-                } else if (verIDSessionResult.outcome == VerIDSessionResult.Outcome.FAIL_NUMBER_OF_RESULTS) {
-                    // No faces detected
-                    Toast.makeText(this, R.string.failed_to_detect_face, Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -234,6 +267,7 @@ public class MainActivity extends AppCompatActivity {
     private void deleteIdCaptureResult() {
         if (idDocument != null) {
             idDocument = null;
+            cardImageUri = null;
             CardCaptureResultPersistence.saveCapturedDocument(this, null);
         }
     }
@@ -242,25 +276,21 @@ public class MainActivity extends AppCompatActivity {
         // Enable the Compare Live Face button if we have the image of the front of the card, barcode text and selfie face
         liveFaceCompareButton.setEnabled(idDocument != null);
         cardImageView.setVisibility(idDocument != null ? View.VISIBLE : View.GONE);
-        cardImageView.setImageDrawable(null);
-        if (idDocument != null) {
-            if (idDocument.getImageUri() != null) {
-                if (Build.VERSION.SDK_INT >= 21) {
-                    try {
-                        InputStream inputStream = getContentResolver().openInputStream(idDocument.getImageUri());
-                        RoundedBitmapDrawable bitmapDrawable = RoundedBitmapDrawableFactory.create(getResources(), inputStream);
-                        bitmapDrawable.setCornerRadius((float) bitmapDrawable.getIntrinsicHeight() / 20f);
-                        cardImageView.setImageDrawable(bitmapDrawable);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                        cardImageView.setImageURI(idDocument.getImageUri());
-                    }
-                } else {
-                    cardImageView.setImageURI(idDocument.getImageUri());
-                }
+        if (idDocument != null && cardImageUri != null) {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(cardImageUri);
+                RoundedBitmapDrawable bitmapDrawable = RoundedBitmapDrawableFactory.create(getResources(), inputStream);
+                bitmapDrawable.setCornerRadius((float) bitmapDrawable.getIntrinsicHeight() / 20f);
+                cardImageView.setImageDrawable(bitmapDrawable);
+                scrollView.setVisibility(View.GONE);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                idDocument = null;
+                cardImageUri = null;
+                updateContent();
             }
-            scrollView.setVisibility(View.GONE);
         } else {
+            cardImageView.setImageDrawable(null);
             scrollView.setVisibility(View.VISIBLE);
         }
     }
@@ -273,10 +303,38 @@ public class MainActivity extends AppCompatActivity {
 
     private void compareLiveFace() {
         // Ensure we have a valid ID capture result to compare the selfie to
-        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFaceTemplate() != null) {
+        if (verID != null && verIDSessionResult != null && verIDSessionResult.getError() == null && verIDSessionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT).length > 0 && idDocument != null && idDocument.getFaceTemplate() != null) {
             Intent intent = new Intent(this, CaptureResultActivity.class);
             intent.putExtra(CaptureResultActivity.EXTRA_LIVENESS_DETECTION_RESULT, verIDSessionResult);
+            intent.putExtra(VerIDSessionActivity.EXTRA_VERID_INSTANCE_ID, verID.getInstanceId());
             startActivity(intent);
         }
+    }
+
+    private void onVerIDLoaded() {
+        if (!isDestroyed()) {
+            setShowProgressBar(false);
+            CardCaptureResultPersistence.loadCapturedDocument(this, new CardCaptureResultPersistence.LoadCallback() {
+                @Override
+                public void onLoadDocument(IDDocument document) {
+                    idDocument = document;
+                    if (document != null) {
+                        cardImageUri = Uri.fromFile(defaultCardImageFile);
+                    }
+                    updateContent();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
+        this.verID = verID;
+        onVerIDLoaded();
+    }
+
+    @Override
+    public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
+
     }
 }

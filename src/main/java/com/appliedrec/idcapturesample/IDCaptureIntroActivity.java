@@ -1,48 +1,69 @@
 package com.appliedrec.idcapturesample;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 
-import com.appliedrec.ver_ididcapture.GuideActivity;
-import com.appliedrec.ver_ididcapture.IDCaptureActivity;
-import com.appliedrec.ver_ididcapture.VerIDIDCaptureIntent;
-import com.appliedrec.ver_ididcapture.VerIDIDCaptureSettings;
-import com.appliedrec.ver_ididcapture.data.IDDocument;
+import com.appliedrec.verid.credentials.GuideFragment;
+import com.appliedrec.verid.credentials.GuideFragmentListener;
+import com.appliedrec.verid.credentials.IDCaptureSessionActivity;
+import com.appliedrec.verid.credentials.IDCaptureSessionSettings;
+import com.appliedrec.verid.credentials.IDDocument;
+import com.appliedrec.verid.credentials.IGuideFragment;
 
-public class IDCaptureIntroActivity extends GuideActivity {
+public class IDCaptureIntroActivity extends AppCompatActivity implements GuideFragmentListener {
 
-    VerIDIDCaptureSettings settings;
+    IDCaptureSessionSettings settings;
+    int veridInstanceId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getIntent() != null) {
-            settings = getIntent().getParcelableExtra(IDCaptureActivity.EXTRA_SETTINGS);
+            settings = getIntent().getParcelableExtra(IDCaptureSessionActivity.EXTRA_SETTINGS);
+            veridInstanceId = getIntent().getIntExtra(IDCaptureSessionActivity.EXTRA_VERID_INSTANCE_ID, -1);
+        }
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().add(R.id.container, GuideFragment.newInstance(settings.document)).commit();
         }
     }
 
+//    @Override
+//    protected void onLeftButtonClick() {
+//
+//    }
+//
+//    @Override
+//    protected void onRightButtonClick() {
+//        if (settings == null) {
+//            settings = new IDCaptureSessionSettings((IDDocument)null, false, false, true);
+//        }
+//        try {
+//            Intent intent = new VerIDIDCaptureIntent(this, VerID.getInstance(veridInstanceId), settings);
+//            intent.putExtras(getIntent());
+//            startActivityForResult(intent, 0);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    @Override
+//    protected int getImageResourceId() {
+//        return R.mipmap.id_card;
+//    }
+//
+//    @Override
+//    protected String getText() {
+//        return getString(R.string.capture_intro);
+//    }
+
     @Override
-    protected void onLeftButtonClick() {
+    public void onStartCapturingDocument(Fragment guideFragment, IDDocument document) {
 
     }
 
     @Override
-    protected void onRightButtonClick() {
-        if (settings == null) {
-            settings = new VerIDIDCaptureSettings((IDDocument)null, false, false, true);
-        }
-        Intent intent = new VerIDIDCaptureIntent(this, settings);
-        intent.putExtras(getIntent());
-        startActivityForResult(intent, 0);
-    }
+    public void onGuideFragmentCancel(Fragment guideFragment) {
 
-    @Override
-    protected int getImageResourceId() {
-        return com.appliedrec.ver_ididcapture.R.mipmap.id_card;
-    }
-
-    @Override
-    protected String getText() {
-        return getString(com.appliedrec.ver_ididcapture.R.string.capture_intro);
     }
 }

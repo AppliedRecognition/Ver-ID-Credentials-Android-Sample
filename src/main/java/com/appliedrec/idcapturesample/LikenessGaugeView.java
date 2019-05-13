@@ -21,103 +21,95 @@ public class LikenessGaugeView extends View {
 
     private float score;
     private Paint needlePaint;
-    private ValueAnimator scoreAnimator;
+    private Paint needleDotPaint;
+    private float threshold = 0.5f;
+    private float max = 1.0f;
+    private Paint passPaint;
+    private Paint failPaint;
+    private float strokeWidth = 20f;
+    private RectF ovalRect;
+    private float needleDotRadius = 12f;
 
     public LikenessGaugeView(Context context) {
-        super(context);
-        init();
+        this(context, null, 0);
     }
 
     public LikenessGaugeView(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        init();
+        this(context, attrs, 0);
     }
 
     public LikenessGaugeView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    private void init() {
         score = 0f;
+        float density = getContext().getResources().getDisplayMetrics().density;
+        strokeWidth *=  density;
+        needleDotRadius *= density;
         needlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         needlePaint.setStyle(Paint.Style.STROKE);
         needlePaint.setColor(Color.BLACK);
-        needlePaint.setStrokeWidth(3 * getContext().getResources().getDisplayMetrics().density);
+        needlePaint.setStrokeWidth(3 * density);
         needlePaint.setStrokeCap(Paint.Cap.ROUND);
-        setBackgroundResource(R.mipmap.similarity_dial);
-        scoreAnimator = ValueAnimator.ofFloat(0f,0.4f);
-        scoreAnimator.setDuration(8000);
-        scoreAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        scoreAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                score = (float)animation.getAnimatedValue();
-                postInvalidate();
-            }
-        });
-        scoreAnimator.setRepeatCount(ValueAnimator.INFINITE);
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        // Initially run an animation showing the needle slowly oscillate between 0 and 0.4
-        scoreAnimator.start();
+        needleDotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        needleDotPaint.setStyle(Paint.Style.FILL);
+        needleDotPaint.setColor(Color.BLACK);
+        passPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        passPaint.setStyle(Paint.Style.STROKE);
+        passPaint.setColor(getResources().getColor(R.color.verid_green));
+        passPaint.setStrokeWidth(strokeWidth);
+        passPaint.setStrokeCap(Paint.Cap.BUTT);
+        failPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        failPaint.setStyle(Paint.Style.STROKE);
+        failPaint.setColor(Color.RED);
+        failPaint.setStrokeWidth(strokeWidth);
+        failPaint.setStrokeCap(Paint.Cap.BUTT);
+        ovalRect = new RectF(strokeWidth / 2f, strokeWidth / 2f, strokeWidth / 2f, strokeWidth / 2f);
     }
 
     @UiThread
-    public void setScore(final float score) {
-        // When the score value is set animate the needle from the current value
-        scoreAnimator.cancel();
-        scoreAnimator.setFloatValues(this.score, score);
-        scoreAnimator.setRepeatCount(0);
-        scoreAnimator.setDuration(500);
-        scoreAnimator.removeAllListeners();
-        scoreAnimator.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                LikenessGaugeView.this.score = score;
-                postInvalidate();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                LikenessGaugeView.this.score = score;
-                postInvalidate();
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-        scoreAnimator.start();
+    public void setScore(float score) {
+        this.score = score;
+        postInvalidate();
     }
 
     public float getScore() {
         return score;
     }
 
+    public float getThreshold() {
+        return threshold;
+    }
+
+    public void setThreshold(float threshold) {
+        this.threshold = threshold;
+        postInvalidate();
+    }
+
+    public float getMax() {
+        return max;
+    }
+
+    public void setMax(float max) {
+        this.max = max;
+        postInvalidate();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        float top = (float)getHeight() / 93f * 7f;
-        RectF elipseRect = new RectF(0, top, getWidth(), top + (float)getWidth() / 248f * 158f);
-        float angleOffset = 0.57f;
-        float minAngle = (float)(Math.PI + angleOffset);
-        float maxAngle = (float)(Math.PI * 2 - angleOffset);
-        float angle = minAngle + score * (maxAngle - minAngle);
-        float length = elipseRect.right - elipseRect.centerX();
-        float height = (float)(Math.sin(angle) * length * (elipseRect.height() / elipseRect.width()));
-        float width = (float)(Math.cos(angle) * length);
-        PointF origin = new PointF(elipseRect.centerX(), elipseRect.centerY());
-        PointF destination = new PointF(elipseRect.centerX() + width, elipseRect.centerY() + height);
-        canvas.drawLine(origin.x, origin.y, destination.x, destination.y, needlePaint);
+
+        float sweep = threshold / max * 180f;
+        ovalRect.right = getWidth() - strokeWidth;
+        ovalRect.bottom = getHeight() * 2 - strokeWidth;
+
+        canvas.drawArc(ovalRect, 180f, sweep, false, failPaint);
+        canvas.drawArc(ovalRect, 180f + sweep, 180f - sweep, false, passPaint);
+
+        canvas.drawCircle(ovalRect.centerX(), getHeight(), needleDotRadius, needleDotPaint);
+
+        double minAngle = Math.PI;
+        double maxAngle = Math.PI * 2;
+        double scoreAngle = score / max * (maxAngle - minAngle);
+
+        canvas.drawLine(ovalRect.centerX(), getHeight(), (float)(ovalRect.centerX() - Math.cos(scoreAngle)*ovalRect.width()/2.0), (float)(getHeight() - Math.sin(scoreAngle)*ovalRect.height()), needlePaint);
     }
 }
