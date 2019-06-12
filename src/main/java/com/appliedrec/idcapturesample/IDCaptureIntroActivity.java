@@ -1,15 +1,14 @@
 package com.appliedrec.idcapturesample;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.appliedrec.verid.credentials.GuideFragment;
 import com.appliedrec.verid.credentials.GuideFragmentListener;
 import com.appliedrec.verid.credentials.IDCaptureSessionActivity;
 import com.appliedrec.verid.credentials.IDCaptureSessionSettings;
 import com.appliedrec.verid.credentials.IDDocument;
-import com.appliedrec.verid.credentials.IGuideFragment;
 
 public class IDCaptureIntroActivity extends AppCompatActivity implements GuideFragmentListener {
 
