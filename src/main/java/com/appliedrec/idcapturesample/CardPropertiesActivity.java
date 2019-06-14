@@ -8,9 +8,9 @@ import android.view.MenuItem;
 import android.widget.Switch;
 
 import com.appliedrec.verid.core.VerID;
-import com.appliedrec.verid.credentials.BarcodeFeature;
+import com.appliedrec.verid.credentials.BarcodePage;
 import com.appliedrec.verid.credentials.CardFormat;
-import com.appliedrec.verid.credentials.FacePhotoFeature;
+import com.appliedrec.verid.credentials.FacePhotoPage;
 import com.appliedrec.verid.credentials.IDCaptureSessionActivity;
 import com.appliedrec.verid.credentials.IDCaptureSessionSettings;
 import com.appliedrec.verid.credentials.IDDocument;
@@ -74,11 +74,11 @@ public class CardPropertiesActivity extends AppCompatActivity {
 
     private void startIDCaptureSession() {
         Page[] pages = new Page[barcodePageSwitch.isChecked() ? 2 : 1];
-        pages[0] = new Page(CardFormat.ID1, new IDFeature[]{new FacePhotoFeature()});
+        pages[0] = new FacePhotoPage(CardFormat.ID1);
         if (barcodePageSwitch.isChecked()) {
-            pages[1] = new Page(CardFormat.ID1, new IDFeature[]{new BarcodeFeature()});
+            pages[1] = new BarcodePage(CardFormat.ID1, BarcodePage.BarcodeFormat.PDF417);
         }
-        IDCaptureSessionSettings settings = new IDCaptureSessionSettings(new IDDocument(pages), false, true, true);
+        IDCaptureSessionSettings settings = new IDCaptureSessionSettings(new IDDocument(pages), false, true);
         Intent intent = new VerIDIDCaptureIntent(this, verID, settings);
         startActivityForResult(intent, REQUEST_CODE_ID_CAPTURE);
     }

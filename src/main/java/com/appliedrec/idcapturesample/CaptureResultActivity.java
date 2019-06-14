@@ -18,7 +18,7 @@ import com.appliedrec.verid.core.Bearing;
 import com.appliedrec.verid.core.Face;
 import com.appliedrec.verid.core.VerID;
 import com.appliedrec.verid.core.VerIDSessionResult;
-import com.appliedrec.verid.credentials.FacePhotoFeature;
+import com.appliedrec.verid.credentials.FacePhotoPage;
 import com.appliedrec.verid.credentials.IDCaptureSessionActivity;
 import com.appliedrec.verid.credentials.IDDocument;
 import com.appliedrec.verid.credentials.IDFeature;
@@ -63,11 +63,9 @@ public class CaptureResultActivity extends AppCompatActivity {
                 if (page.getImageUri() == null) {
                     continue;
                 }
-                for (IDFeature feature : page.getFeatures()) {
-                    if (feature instanceof FacePhotoFeature) {
-                        setCroppedImageInImageView(page.getImageUri(), feature.getBounds(), cardFaceView);
-                        return;
-                    }
+                if (page instanceof FacePhotoPage && ((FacePhotoPage) page).getFace() != null) {
+                    setCroppedImageInImageView(page.getImageUri(), ((FacePhotoPage) page).getFace().getBounds(), cardFaceView);
+                    return;
                 }
             }
         } catch (Exception e) {
