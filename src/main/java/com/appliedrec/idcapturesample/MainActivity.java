@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.Menu;
@@ -26,6 +27,7 @@ import com.appliedrec.ver_id.session.VerIDSessionResult;
 import com.appliedrec.ver_id.ui.VerIDActivity;
 import com.appliedrec.ver_ididcapture.CardOverlayView;
 import com.appliedrec.ver_ididcapture.IDCaptureActivity;
+import com.appliedrec.ver_ididcapture.SessionStatus;
 import com.appliedrec.ver_ididcapture.VerIDIDCapture;
 import com.appliedrec.ver_ididcapture.VerIDIDCaptureIntent;
 import com.appliedrec.ver_ididcapture.VerIDIDCaptureSettings;
@@ -162,7 +164,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_CARD && resultCode == RESULT_OK && data != null) {
             // Received an ID card
             idDocument = data.getParcelableExtra(IDCaptureActivity.EXTRA_ID_DOCUMENT);
-            if (idDocument != null && idDocument.getFaceTemplate() != null) {
+            SessionStatus sessionStatus = (SessionStatus)data.getSerializableExtra(IDCaptureActivity.EXTRA_SESSION_STATUS);
+            if (sessionStatus != null && sessionStatus == SessionStatus.SUCCESS && idDocument != null && idDocument.getFaceTemplate() != null) {
                 File cardImageFile = new File(getFilesDir(), "idcard.jpg");
                 for (Page page : idDocument.getPages()) {
                     if (page.getImageUri() != null) {
@@ -192,6 +195,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 // Save the card to shared preferences
                 CardCaptureResultPersistence.saveCapturedDocument(this, idDocument);
+            } else if (sessionStatus != null && sessionStatus == SessionStatus.EXPIRED) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Session timed out")
+                        .setPositiveButton(android.R.string.ok, null)
+                        .create()
+                        .show();
             } else {
                 idDocument = null;
             }
