@@ -22,6 +22,9 @@ public class LikenessGaugeView extends View {
     private float score;
     private Paint needlePaint;
     private ValueAnimator scoreAnimator;
+    private RectF ellipseRect = new RectF();
+    private PointF origin = new PointF();
+    private PointF destination = new PointF();
 
     public LikenessGaugeView(Context context) {
         super(context);
@@ -108,16 +111,21 @@ public class LikenessGaugeView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float top = (float)getHeight() / 93f * 7f;
-        RectF elipseRect = new RectF(0, top, getWidth(), top + (float)getWidth() / 248f * 158f);
+        ellipseRect.left = 0;
+        ellipseRect.top = top;
+        ellipseRect.right = getWidth();
+        ellipseRect.bottom = top + (float)getWidth() / 248f * 158f;
         float angleOffset = 0.57f;
         float minAngle = (float)(Math.PI + angleOffset);
         float maxAngle = (float)(Math.PI * 2 - angleOffset);
         float angle = minAngle + score * (maxAngle - minAngle);
-        float length = elipseRect.right - elipseRect.centerX();
-        float height = (float)(Math.sin(angle) * length * (elipseRect.height() / elipseRect.width()));
+        float length = ellipseRect.right - ellipseRect.centerX();
+        float height = (float)(Math.sin(angle) * length * (ellipseRect.height() / ellipseRect.width()));
         float width = (float)(Math.cos(angle) * length);
-        PointF origin = new PointF(elipseRect.centerX(), elipseRect.centerY());
-        PointF destination = new PointF(elipseRect.centerX() + width, elipseRect.centerY() + height);
+        origin.x = ellipseRect.centerX();
+        origin.y = ellipseRect.centerY();
+        destination.x = ellipseRect.centerX() + width;
+        destination.y = ellipseRect.centerY() + height;
         canvas.drawLine(origin.x, origin.y, destination.x, destination.y, needlePaint);
     }
 }

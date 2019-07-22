@@ -28,6 +28,9 @@
 
                 <TextView
                     android:id="@+id/tv1"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/main_intro1"

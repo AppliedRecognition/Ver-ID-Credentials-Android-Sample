@@ -16,13 +16,13 @@ import org.json.JSONException;
  * Helper class that saves the captured ID card result to shared preferences
  */
 
-public class CardCaptureResultPersistence {
+class CardCaptureResultPersistence {
 
     private static final String ID_DOCUMENT_KEY = "idDocument";
 
-    public static boolean saveCapturedDocument(@NonNull Context context, @Nullable IDDocument idDocument) {
+    static boolean saveCapturedDocument(@NonNull Context context, @Nullable IDDocument idDocument) {
         if (idDocument == null) {
-            getSharedPreferences(context).edit().remove(ID_DOCUMENT_KEY);
+            getSharedPreferences(context).edit().remove(ID_DOCUMENT_KEY).apply();
             return true;
         }
         try {
@@ -36,7 +36,7 @@ public class CardCaptureResultPersistence {
     }
 
     @Nullable
-    public static IDDocument loadCapturedDocument(@NonNull Context context) {
+    static IDDocument loadCapturedDocument(@NonNull Context context) {
         String docString = getSharedPreferences(context).getString(ID_DOCUMENT_KEY, null);
         if (docString != null) {
             try {
