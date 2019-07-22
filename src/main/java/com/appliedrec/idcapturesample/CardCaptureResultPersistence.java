@@ -10,8 +10,6 @@ import com.appliedrec.ver_ididcapture.data.IDDocumentCoder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.json.JSONException;
-
 /**
  * Helper class that saves the captured ID card result to shared preferences
  */
