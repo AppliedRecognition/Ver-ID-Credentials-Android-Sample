@@ -1,4 +1,0 @@
-[submodule "src/main/assets/VerIDModels"]
-	path = src/main/assets/VerIDModels
-	url = https://github.com/AppliedRecognition/Ver-ID-Models.git
-	branch = matrix-16
