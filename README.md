@@ -17,14 +17,8 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 1. Under `dependencies` add
 
     ```
-    implementation 'com.appliedrec:id-capture:5.0.4'
+    implementation 'com.appliedrec:id-capture:6.0.0'
     ```
-1. Under `android/defaultConfig` add
-
-	```
-	renderscriptTargetApi 18
-	renderscriptSupportModeEnabled true
-	```
 1. Open your app's **AndroidManifest.xml** file and add the following tag in `<application>` replacing `[your API secret]` with the API secret your received in step 1:
 
     ~~~xml
@@ -32,14 +26,6 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
         android:name="com.appliedrec.verid.apiSecret"
         android:value="[your API secret]" />
     ~~~
-1. [Download resources archive](https://ver-id.s3.amazonaws.com/resources/models/v1/VerIDModels.zip) and put it in your app's **assets** folder.
-1. As an alternative to the previous step, specify a URL from which to download the resources. This will reduce the download size of your app. In the app's manifest file:
-
-    ~~~xml
-    <meta-data
-        android:name="com.appliedrec.verid.resourcesURL"
-        android:value="http://my.domain.com/path/to/resources.zip" />
-	~~~
 	
 ## Getting Started with the Ver-ID Credentials API
 To scan an ID card your app will start an activity with a Ver-ID ID Capture intent and receive the result in `onActivityResult`.
@@ -57,29 +43,26 @@ To scan an ID card your app will start an activity with a Ver-ID ID Capture inte
 public class MyActivity extends AppCompatActivity {
 	
 	private static final int REQUEST_CODE_ID_CAPTURE = 0;
+	private VerID verID;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.my_activity);
-		VerID.shared.load(this, "myApiSecret", new VerID.LoadCallback() {
-			@Override
-			public void onLoad() {
+		new VerIDFactory(this, new VerIDFactoryDelegate() {
+            @Override
+            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
+            	MyActivity.this.verID = verID;
 				// Ver-ID is now loaded. Here you may do things 
 				// like enable buttons that control the ID capture.
-			}
-			@Override
-			public void onError(Exception exception) {
-				// Ver-ID failed to load. Check your API secret.
-			}
-		});
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		// Unload Ver-ID when your activity gets destroyed
-		VerID.shared.unload();
+            }
+
+            @Override
+            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
+                loadingIndicatorView.setVisibility(View.GONE);
+                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
+            }
+        }).createVerID();
 	}
 
 	/**
@@ -91,18 +74,16 @@ public class MyActivity extends AppCompatActivity {
 		boolean showGuide = true;
 		// If you want to show the result of the scan to the user set this to true
 		boolean showResult = true;
-		// To extract a face that's suitable for face recognition
-		boolean detectFaceForRecognition = true;
 		// Set the region where the requested card was issued.
 		// If you want the API to guess use the RegionUtil utility class.
 		// The utility class will base the region on the device's SIM card provider 
 		// or on the device's locale. If you want the user to choose the region
 		// set the variable to Region.GENERAL.
-		Region region = RegionUtil.getUserRegion(this);
+		IDDocument document = RegionUtil.getDefaultDocumentForUserRegion(this);
 		// Construct ID capture settings
-		VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(region, showGuide, showResult, detectFaceForRecognition);
+		VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(document, showGuide, showResult);
 		// Construct an intent
-		VerIDIDCaptureIntent intent = new VerIDIDCaptureIntent(this, settings);
+		VerIDIDCaptureIntent intent = new VerIDIDCaptureIntent(this, verID, settings);
 		// Start the ID capture activity
 		startActivityForResult(intent, REQUEST_CODE_ID_CAPTURE);
 	}
@@ -164,30 +145,27 @@ public class MyActivity extends AppCompatActivity {
 public class MyActivity extends AppCompatActivity {
 	
 	private static final int REQUEST_CODE_LIVENESS_DETECTION = 1;
+	private VerID verID;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.my_activity);
-		VerID.shared.load(this, "myApiSecret", new VerID.LoadCallback() {
-			@Override
-			public void onLoad() {
+		new VerIDFactory(this, new VerIDFactoryDelegate() {
+            @Override
+            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
+            	MyActivity.this.verID = verID;
 				// Ver-ID is now loaded. Here you may do things 
 				// like enable buttons that control the ID capture.
-			}
-			@Override
-			public void onError(Exception exception) {
-				// Ver-ID failed to load. Check your API secret.
-			}
-		});
-	}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		// Unload Ver-ID when your activity gets destroyed
-		VerID.shared.unload();
-	}
+            }
+
+            @Override
+            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
+                loadingIndicatorView.setVisibility(View.GONE);
+                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
+            }
+        }).createVerID();	
+    }
 	
 	/**
 	 * Call this method to start the liveness detection session
@@ -195,11 +173,9 @@ public class MyActivity extends AppCompatActivity {
 	 */
 	void runLivenessDetection() {
 		// Create liveness detection settings
-		VerIDLivenessDetectionSessionSettings settings = new VerIDLivenessDetectionSessionSettings();
-		// Ask Ver-ID to extract face templates needed for face recognition
-		settings.includeFaceTemplatesInResult = true;
+		LivenessDetectionSessionSettings settings = new LivenessDetectionSessionSettings();
 		// Construct the liveness detection intent
-		VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this, settings);
+		VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this, verID, settings);
 		// Start the liveness detection activity
 		startActivityForResult(intent, REQUEST_CODE_LIVENESS_DETECTION);
 	}
@@ -212,16 +188,16 @@ public class MyActivity extends AppCompatActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == REQUEST_CODE_LIVENESS_DETECTION && resultCode == RESULT_OK && data != null) {
 			// Extract the liveness detection session result from the data intent
-			VerIDSessionResult verIDSessionResult = data.getParcelableExtra(VerIDActivity.EXTRA_SESSION_RESULT);
-			if (verIDSessionResult == null || !verIDSessionResult.isPositive()) {
+			VerIDSessionResult verIDSessionResult = data.getParcelableExtra(VerIDSessionActivity.EXTRA_RESULT);
+			if (verIDSessionResult == null || verIDSessionResult.getError() != null) {
 				return;
 			}
 			// Get the face and image URI of the first captured selfie
-			HashMap<VerIDFace,Uri> faceImages = verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT);
+			HashMap<Face,Uri> faceImages = verIDSessionResult.getFaceImages(Bearing.STRAIGHT);
 			if (faceImages.isEmpty()) {
 				return;
 			}
-			Map.Entry<VerIDFace,Uri> faceImage = faceImages.entrySet().iterator().next();
+			Map.Entry<Face,Uri> faceImage = faceImages.entrySet().iterator().next();
 			// Get the bounds of the face detected in the first selfie
 			Rect faceBounds = new Rect();
 			faceImage.getKey().getBoundingBox().round(faceBounds);
@@ -264,51 +240,58 @@ public class CaptureResultActivity extends AppCompatActivity {
         // Obtain idCaptureResult and livenessDetectionResult, e.g. from intent parcelable
         // ...
         if (document == null || livenessDetectionResult == null) {
-	        updateScore(null);
-        }
-        
-        if (document.getFaceSuitableForRecognition() != null && livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT).length > 0) {
-            compareFaceTemplates();
+	        setAuthenticated(null);
+        }        
+        if (document.getFaceSuitableForRecognition() != null && livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT).length > 0) {
+        	new VerIDFactory(this, new VerIDFactoryDelegate() {
+	            @Override
+	            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
+	            	compareFaceTemplates(verID);
+	            }
+	
+	            @Override
+	            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
+	                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
+	            }
+	        }).createVerID();
             return;
         }
-        updateScore(null);
+        setAuthenticated(null);
     }
 
-    private void compareFaceTemplates() {
+    private void compareFaceTemplates(VerID verId) {
     	AsyncTask.execute(new Runnable() {
     		@Override
     		public void run() {
     			Float score = null;
-		        VerIDFace cardFace = document.getFaceSuitableForRecognition();
-		        VerIDFace[] liveFaces = livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT);
-		        for (VerIDFace face : liveFaces) {
-		            try {
-		                float faceScore = FaceUtil.compareFaces(cardFace, face);
-		                if (score == null) {
-		                    score = faceScore;
-		                } else {
-		                    score = Math.max(faceScore, score);
-		                }
-		            } catch (Exception e) {
-		                e.printStackTrace();
-		            }
+		        RecognizableFace cardFace = document.getFaceSuitableForRecognition();
+		        RecognizableFace[] liveFaces = livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT);
+		        try {
+		        	float score = verID.getFaceRecognition().compareSubjectFacesToFaces(new RecognizableFace[]{cardFace}, liveFaces);
+		        	float threshold = verID.getFaceRecognition().getAuthenticationThreshold();
+		        	// If score >= threshold the user can be considered authenticated against the ID card
+		        	final boolean authenticated = 
+			        runOnUiThread(new Runnable() {
+			        	@Override
+			        	public void run() {
+				        	updateScore(score);
+				        }
+			        });
+		        } catch (Exception e) {
+		        	runOnUiThread(new Runnable() {
+			        	@Override
+			        	public void run() {
+				        	setAuthenticated(null);
+				        }
+			        });
 		        }
-		        final Float finalScore = score;
-		        runOnUiThread(new Runnable() {
-		        	@Override
-		        	public void run() {
-			        	updateScore(finalScore);
-			        }
-		        });
     		}
 		});
     }
 
     @UiThread
-    private void updateScore(Float score) {
-        if (score != null) {
-            // Display the score
-        } else {
+    private void setAuthenticated(Boolean authenticated) {
+        if (authenticated == null) {
             // Display error
         }
     }
