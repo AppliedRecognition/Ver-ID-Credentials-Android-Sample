@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.appliedrec.ver_ididcapture.data.IDDocument;
 import com.appliedrec.verid.core.Bearing;
+import com.appliedrec.verid.core.IRecognizable;
 import com.appliedrec.verid.core.RecognizableFace;
 import com.appliedrec.verid.core.VerID;
 import com.appliedrec.verid.core.VerIDSessionResult;
@@ -59,11 +60,11 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
      */
     private static class ScoreLoader extends AsyncTaskLoader<Float> {
 
-        private RecognizableFace cardFaceTemplate;
+        private IRecognizable cardFaceTemplate;
         private RecognizableFace[] liveFaces;
         private VerID verID;
 
-        public ScoreLoader(Context context, VerID verID, RecognizableFace cardFaceTemplate, RecognizableFace[] liveFaces) {
+        public ScoreLoader(Context context, VerID verID, IRecognizable cardFaceTemplate, RecognizableFace[] liveFaces) {
             super(context);
             this.verID = verID;
             this.cardFaceTemplate = cardFaceTemplate;
@@ -73,7 +74,7 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         @Override
         public Float loadInBackground() {
             try {
-                float score = verID.getFaceRecognition().compareSubjectFacesToFaces(new RecognizableFace[]{cardFaceTemplate}, liveFaces);
+                float score = verID.getFaceRecognition().compareSubjectFacesToFaces(new IRecognizable[]{cardFaceTemplate}, liveFaces);
                 float threshold = verID.getFaceRecognition().getAuthenticationThreshold();
                 float max = verID.getFaceRecognition().getMaxAuthenticationScore();
                 if (score >= threshold) {

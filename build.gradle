@@ -15,16 +15,14 @@ buildscript {
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 28
 
     defaultConfig {
         applicationId "com.appliedrec.idcapturesample"
         minSdkVersion 18
-        targetSdkVersion 26
+        targetSdkVersion 28
         versionCode 1
-        versionName "5.1.3"
-        renderscriptTargetApi 16
-        renderscriptSupportModeEnabled true
+        versionName "6.0.0"
 
     }
     buildTypes {
@@ -49,7 +47,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.appliedrec:id-capture:5.1.3'
-    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.appliedrec:id-capture:6.0.0'
+    implementation 'com.appliedrec.verid:ui:1.7.9'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }
