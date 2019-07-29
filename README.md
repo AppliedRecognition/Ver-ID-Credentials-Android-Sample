@@ -296,3 +296,5 @@ public class CaptureResultActivity extends AppCompatActivity {
     }
 }
 ~~~
+
+[Reference documentation](https://appliedrecognition.github.io/Ver-ID-Credentials-Android/)
