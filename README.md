@@ -98,11 +98,10 @@ public class MyActivity extends AppCompatActivity {
 		if (requestCode == REQUEST_CODE_ID_CAPTURE && resultCode == RESULT_OK && data != null) {
 			// Extract the ID capture result from the data intent
 			IDDocument document = data.getParcelable(IDCaptureActivity.EXTRA_ID_DOCUMENT);
-			if (document == null) {	
+			if (document == null || document.getFaceBounds() == null) {	
 				return;
 			}
 			Uri imageUri = document.getImageUri();
-			VerIDFace face = document.getFace();
 			if (imageUri == null || face == null) {
 				return;
 			}
@@ -113,7 +112,7 @@ public class MyActivity extends AppCompatActivity {
 		
 			// Get the bounds of the face detected on the ID card
 			Rect faceBounds = new Rect();
-			face.getBoundingBox().round(faceBounds);
+			document.getFaceBounds().round(faceBounds);
 			// Load the image of the front of the card
 			InputStream inputStream = getContentResolver().openInputStream(imageUri);
 			try {
