@@ -18,12 +18,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.appliedrec.ver_id.VerID;
-import com.appliedrec.ver_id.model.FaceTemplate;
-import com.appliedrec.ver_id.model.VerIDFace;
-import com.appliedrec.ver_id.session.VerIDSessionResult;
-import com.appliedrec.ver_id.util.FaceUtil;
 import com.appliedrec.ver_ididcapture.data.IDDocument;
+import com.appliedrec.verid.core.Bearing;
+import com.appliedrec.verid.core.RecognizableFace;
+import com.appliedrec.verid.core.VerID;
+import com.appliedrec.verid.core.VerIDSessionResult;
+import com.appliedrec.verid.ui.VerIDSessionActivity;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -59,32 +59,32 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
      */
     private static class ScoreLoader extends AsyncTaskLoader<Float> {
 
-        private FaceTemplate cardFaceTemplate;
-        private VerIDFace[] liveFaces;
+        private RecognizableFace cardFaceTemplate;
+        private RecognizableFace[] liveFaces;
+        private VerID verID;
 
-        public ScoreLoader(Context context, FaceTemplate cardFaceTemplate, VerIDFace[] liveFaces) {
+        public ScoreLoader(Context context, VerID verID, RecognizableFace cardFaceTemplate, RecognizableFace[] liveFaces) {
             super(context);
+            this.verID = verID;
             this.cardFaceTemplate = cardFaceTemplate;
             this.liveFaces = liveFaces;
         }
 
         @Override
         public Float loadInBackground() {
-            Float score = null;
-            for (VerIDFace face : liveFaces) {
-                try {
-                    VerIDFace cardFace = new VerIDFace(cardFaceTemplate);
-                    float faceScore = FaceUtil.compareFaces(cardFace, face);
-                    if (score == null) {
-                        score = faceScore;
-                    } else {
-                        score = Math.max(faceScore, score);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+            try {
+                float score = verID.getFaceRecognition().compareSubjectFacesToFaces(new RecognizableFace[]{cardFaceTemplate}, liveFaces);
+                float threshold = verID.getFaceRecognition().getAuthenticationThreshold();
+                float max = verID.getFaceRecognition().getMaxAuthenticationScore();
+                if (score >= threshold) {
+                    return 0.5f + (score - threshold) / (max - threshold) * 0.5f;
+                } else {
+                    return score / threshold * 0.5f;
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
             }
-            return score;
         }
     }
 
@@ -135,11 +135,11 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         Intent intent = getIntent();
         if (idDocument != null && idDocument.getFaceTemplate() != null && intent != null) {
             livenessDetectionResult = intent.getParcelableExtra(EXTRA_LIVENESS_DETECTION_RESULT);
-            if (livenessDetectionResult != null && livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT).length > 0) {
+            if (livenessDetectionResult != null && livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT).length > 0) {
                 // Get the cropped face images
-                getSupportLoaderManager().initLoader(LOADER_ID_CARD_FACE, intent.getExtras(), this).forceLoad();
-                getSupportLoaderManager().initLoader(LOADER_ID_LIVE_FACE, intent.getExtras(), this).forceLoad();
-                getSupportLoaderManager().initLoader(LOADER_ID_SCORE, null, this).forceLoad();
+                LoaderManager.getInstance(this).initLoader(LOADER_ID_CARD_FACE, intent.getExtras(), this).forceLoad();
+                LoaderManager.getInstance(this).initLoader(LOADER_ID_LIVE_FACE, intent.getExtras(), this).forceLoad();
+                LoaderManager.getInstance(this).initLoader(LOADER_ID_SCORE, intent.getExtras(), this).forceLoad();
                 return;
             }
         }
@@ -163,13 +163,19 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
                 idDocument.getFaceBounds().round(cardImageFaceBounds);
                 return new ImageLoader(this, cardImageUri, cardImageFaceBounds);
             case LOADER_ID_LIVE_FACE:
-                VerIDFace face = livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT)[0];
+                RecognizableFace face = livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT)[0];
                 Uri faceImageUri = livenessDetectionResult.getFaceImages().get(face);
                 Rect faceImageFaceBounds = new Rect();
                 face.getBounds().round(faceImageFaceBounds);
                 return new ImageLoader(this, faceImageUri, faceImageFaceBounds);
             case LOADER_ID_SCORE:
-                return new ScoreLoader(this, idDocument.getFaceTemplate(), livenessDetectionResult.getFacesSuitableForRecognition(VerID.Bearing.STRAIGHT));
+                try {
+                    VerID verID = VerID.getInstance(args.getInt(VerIDSessionActivity.EXTRA_VERID_INSTANCE_ID, -1));
+                    return new ScoreLoader(this, verID, idDocument.getFaceTemplate(), livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
             default:
                 return null;
 

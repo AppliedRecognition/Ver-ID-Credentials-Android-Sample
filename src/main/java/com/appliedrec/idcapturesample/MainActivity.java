@@ -20,19 +20,21 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.appliedrec.ver_id.VerID;
-import com.appliedrec.ver_id.VerIDLivenessDetectionIntent;
-import com.appliedrec.ver_id.session.VerIDLivenessDetectionSessionSettings;
-import com.appliedrec.ver_id.session.VerIDSessionResult;
-import com.appliedrec.ver_id.ui.VerIDActivity;
 import com.appliedrec.ver_ididcapture.CardOverlayView;
 import com.appliedrec.ver_ididcapture.IDCaptureActivity;
 import com.appliedrec.ver_ididcapture.SessionStatus;
-import com.appliedrec.ver_ididcapture.VerIDIDCapture;
 import com.appliedrec.ver_ididcapture.VerIDIDCaptureIntent;
 import com.appliedrec.ver_ididcapture.VerIDIDCaptureSettings;
 import com.appliedrec.ver_ididcapture.data.IDDocument;
 import com.appliedrec.ver_ididcapture.data.Page;
+import com.appliedrec.verid.core.Bearing;
+import com.appliedrec.verid.core.LivenessDetectionSessionSettings;
+import com.appliedrec.verid.core.VerID;
+import com.appliedrec.verid.core.VerIDFactory;
+import com.appliedrec.verid.core.VerIDFactoryDelegate;
+import com.appliedrec.verid.core.VerIDSessionResult;
+import com.appliedrec.verid.ui.VerIDSessionActivity;
+import com.appliedrec.verid.ui.VerIDSessionIntent;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView cardImageView;
     private View scrollView;
     private FrameLayout heroLayout;
+    private VerID verID;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 // Start the ID card scan
                 verIDSessionResult = null;
                 VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings((IDDocument)null, true, true, true);
-                Intent intent = new VerIDIDCaptureIntent(MainActivity.this, settings);
+                Intent intent = new VerIDIDCaptureIntent(MainActivity.this, verID, settings);
                 startActivityForResult(intent, REQUEST_CODE_CARD);
             }
         });
@@ -81,18 +84,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Collect a live selfie and compare it to the face on the ID card
-                VerIDLivenessDetectionSessionSettings sessionSettings = new VerIDLivenessDetectionSessionSettings();
-                sessionSettings.expiryTime = 120000;
-                // Ask Ver-ID to extract face templates needed for face recognition
-                sessionSettings.includeFaceTemplatesInResult = true;
-                Intent intent = new VerIDLivenessDetectionIntent(MainActivity.this, sessionSettings);
+                LivenessDetectionSessionSettings sessionSettings = new LivenessDetectionSessionSettings();
+                sessionSettings.setExpiryTime(120000);
+                Intent intent = new VerIDSessionIntent<>(MainActivity.this, verID, sessionSettings);
                 startActivityForResult(intent, REQUEST_CODE_FACE);
             }
         });
         cardImageView = new ImageView(this);
         cardImageView.setVisibility(View.GONE);
         scrollView = findViewById(R.id.scrollView);
-        heroLayout = findViewById(com.appliedrec.ver_ididcapture.R.id.hero);
+        heroLayout = findViewById(R.id.hero);
         heroLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -103,10 +104,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         // Load Ver-ID
-        VerID.shared.load(this, new VerID.LoadCallback() {
+        VerIDFactory verIDFactory = new VerIDFactory(this, new VerIDFactoryDelegate() {
             @Override
-            public void onLoad() {
+            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
                 if (!isDestroyed()) {
+                    MainActivity.this.verID = verID;
                     AsyncTask.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -136,18 +138,18 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onError(Exception error) {
+            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
                 loadingIndicatorView.setVisibility(View.GONE);
                 Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
             }
         });
+        verIDFactory.createVerID();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Cleanup
-        VerID.shared.unload();
+        verID = null;
     }
 
     @Override
@@ -207,17 +209,11 @@ public class MainActivity extends AppCompatActivity {
             updateContent();
         } else if (requestCode == REQUEST_CODE_FACE && resultCode == RESULT_OK && data != null) {
             // Received a selfie response
-            verIDSessionResult = data.getParcelableExtra(VerIDActivity.EXTRA_SESSION_RESULT);
-            if (verIDSessionResult != null) {
-                if (verIDSessionResult.isPositive()) {
+            verIDSessionResult = data.getParcelableExtra(VerIDSessionActivity.EXTRA_RESULT);
+            if (verIDSessionResult != null && verIDSessionResult.getError() == null) {
                     // Compare the selfie with the face on the ID card
-                    compareLiveFace();
-                    return;
-                } else if (verIDSessionResult.outcome == VerIDSessionResult.Outcome.FAIL_NUMBER_OF_RESULTS) {
-                    // No faces detected
-                    Toast.makeText(this, R.string.failed_to_detect_face, Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                compareLiveFace();
+                return;
             }
             // Selfie capture failed
             Toast.makeText(this, R.string.live_face_capture_failed, Toast.LENGTH_SHORT).show();
@@ -282,9 +278,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void compareLiveFace() {
         // Ensure we have a valid ID capture result to compare the selfie to
-        if (verIDSessionResult != null && verIDSessionResult.isPositive() && !verIDSessionResult.getFaceImages(VerID.Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFaceTemplate() != null) {
+        if (verIDSessionResult != null && verIDSessionResult.getError() == null && !verIDSessionResult.getFaceImages(Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFaceTemplate() != null) {
             Intent intent = new Intent(this, CaptureResultActivity.class);
             intent.putExtra(CaptureResultActivity.EXTRA_LIVENESS_DETECTION_RESULT, verIDSessionResult);
+            intent.putExtra(VerIDSessionActivity.EXTRA_VERID_INSTANCE_ID, verID.getInstanceId());
             startActivity(intent);
         }
     }
