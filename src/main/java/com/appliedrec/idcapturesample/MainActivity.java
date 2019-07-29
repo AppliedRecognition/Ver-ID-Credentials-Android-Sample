@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Start the ID card scan
                 verIDSessionResult = null;
-                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings((IDDocument)null, true, true, true);
+                VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings((IDDocument)null, true, true);
                 Intent intent = new VerIDIDCaptureIntent(MainActivity.this, verID, settings);
                 startActivityForResult(intent, REQUEST_CODE_CARD);
             }

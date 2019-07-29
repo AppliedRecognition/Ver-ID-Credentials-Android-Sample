@@ -29,7 +29,7 @@ public class IDCaptureIntroActivity extends GuideActivity {
     @Override
     protected void onRightButtonClick() {
         if (settings == null) {
-            settings = new VerIDIDCaptureSettings((IDDocument)null, false, false, true);
+            settings = new VerIDIDCaptureSettings((IDDocument)null, false, false);
         }
         Intent intent = new VerIDIDCaptureIntent(this, settings);
         intent.putExtras(getIntent());
