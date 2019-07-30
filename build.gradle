@@ -22,7 +22,7 @@ android {
         minSdkVersion 18
         targetSdkVersion 28
         versionCode 1
-        versionName "6.0.0"
+        versionName "6.0.1"
 
     }
     buildTypes {
@@ -47,8 +47,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.appliedrec:id-capture:6.0.0'
-    implementation 'com.appliedrec.verid:ui:1.7.9'
+    implementation 'com.appliedrec:id-capture:6.0.1'
+    implementation 'com.appliedrec.verid:ui:1.7.10'
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }
