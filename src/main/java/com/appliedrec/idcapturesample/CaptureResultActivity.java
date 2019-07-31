@@ -134,7 +134,7 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
         likenessGaugeView = findViewById(R.id.likeness_gauge);
         idDocument = CardCaptureResultPersistence.loadCapturedDocument(this);
         Intent intent = getIntent();
-        if (idDocument != null && idDocument.getFaceTemplate() != null && intent != null) {
+        if (idDocument != null && idDocument.getFace() != null && intent != null) {
             livenessDetectionResult = intent.getParcelableExtra(EXTRA_LIVENESS_DETECTION_RESULT);
             if (livenessDetectionResult != null && livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT).length > 0) {
                 // Get the cropped face images
@@ -172,7 +172,7 @@ public class CaptureResultActivity extends AppCompatActivity implements LoaderMa
             case LOADER_ID_SCORE:
                 try {
                     VerID verID = VerID.getInstance(args.getInt(VerIDSessionActivity.EXTRA_VERID_INSTANCE_ID, -1));
-                    return new ScoreLoader(this, verID, idDocument.getFaceTemplate(), livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT));
+                    return new ScoreLoader(this, verID, idDocument.getFace(), livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT));
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;

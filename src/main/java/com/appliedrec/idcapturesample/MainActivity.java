@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                             // Load captured ID card result from shared preferences
                             idDocument = CardCaptureResultPersistence.loadCapturedDocument(MainActivity.this);
                             // Check that the card has a face that's suitable for recognition
-                            if (idDocument != null && idDocument.getFaceTemplate() == null) {
+                            if (idDocument != null && idDocument.getFace() == null) {
                                 idDocument = null;
                                 // Delete the card, it cannot be used for face recognition
                                 CardCaptureResultPersistence.saveCapturedDocument(MainActivity.this, null);
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
             // Received an ID card
             idDocument = data.getParcelableExtra(IDCaptureActivity.EXTRA_ID_DOCUMENT);
             SessionStatus sessionStatus = (SessionStatus)data.getSerializableExtra(IDCaptureActivity.EXTRA_SESSION_STATUS);
-            if (sessionStatus != null && sessionStatus == SessionStatus.SUCCESS && idDocument != null && idDocument.getFaceTemplate() != null) {
+            if (sessionStatus != null && sessionStatus == SessionStatus.SUCCESS && idDocument != null && idDocument.getFace() != null) {
                 File cardImageFile = new File(getFilesDir(), "idcard.jpg");
                 for (Page page : idDocument.getPages()) {
                     if (page.getImageUri() != null) {
@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void compareLiveFace() {
         // Ensure we have a valid ID capture result to compare the selfie to
-        if (verIDSessionResult != null && verIDSessionResult.getError() == null && !verIDSessionResult.getFaceImages(Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFaceTemplate() != null) {
+        if (verIDSessionResult != null && verIDSessionResult.getError() == null && !verIDSessionResult.getFaceImages(Bearing.STRAIGHT).isEmpty() && idDocument != null && idDocument.getFace() != null) {
             Intent intent = new Intent(this, CaptureResultActivity.class);
             intent.putExtra(CaptureResultActivity.EXTRA_LIVENESS_DETECTION_RESULT, verIDSessionResult);
             intent.putExtra(VerIDSessionActivity.EXTRA_VERID_INSTANCE_ID, verID.getInstanceId());
