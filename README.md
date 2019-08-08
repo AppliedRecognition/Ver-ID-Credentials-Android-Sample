@@ -7,18 +7,51 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
 
 1. [Request an API secret](https://dev.ver-id.com/admin/register) for your app.
 1. Open your app module's **gradle.build** file.
-1. Under `repositories` add
+1. Add:
 
+    ```groovy
+    repositories {
+	    jcenter()
+	    maven { url 'http://maven.microblink.com' }
+	    maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
+    }
     ```
-    jcenter()
-    maven { url 'http://maven.microblink.com' }
-    maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
-    ```
-1. Under `dependencies` add
+1. If your app is targeting Android API level 21+ add:
 
-    ```
-    implementation 'com.appliedrec:id-capture:6.0.1'
-    ```
+   ```groovy
+	dependencies {
+		implementation 'com.appliedrec:id-capture:6.0.3'
+	}
+   ```
+1. If your app is targeting Android API level 18–21 add:
+
+   ```groovy
+	dependencies {
+		implementation 'com.appliedrec:id-capture-api18:6.0.3'
+	}
+   ```
+1. If you need to support both Android API level 18–20 and 21+ you may want to create product flavours. For example:
+
+	```groovy
+	android {
+		flavorDimensions "apiLevel"
+		productFlavors {
+			api18 {
+				dimension "apiLevel"
+				minSdkVersion 18
+				maxSdkVersion 20
+			}
+			api21 {
+				dimension "apiLevel"
+				minSdkVersion 21
+			}
+		}
+	}
+	dependencies {
+		api21Implementation 'com.appliedrec:id-capture:6.0.3'
+		api18Implementation 'com.appliedrec:id-capture-api18:6.0.3'
+	}
+	```
 1. Open your app's **AndroidManifest.xml** file and add the following tag in `<application>` replacing `[your API secret]` with the API secret your received in step 1:
 
     ~~~xml
