@@ -21,7 +21,7 @@ ext {
     blinkidVersion = '[5.0.0,6.0.0['
     versionMajor = 7
     versionMinor = 0
-    versionPatch = 0
+    versionPatch = 1
     versionClassifier = null
     versionClassifierVersion = ""
     minSdkVersion = 21
