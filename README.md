@@ -1,57 +1,25 @@
-![Maven metadata URL](https://img.shields.io/maven-metadata/v/https/dev.ver-id.com/artifactory/gradle-release/com/appliedrec/id-capture/maven-metadata.xml.svg)
+# Ver-ID Credentials Sample
 
-# Ver-ID Credentials SDK
-The Ver-ID Credentials SDK allows your app to capture an image of the user's ID card and read the PDF 417 barcode on the back of the card. You can use Ver-ID to compare the face on the front of the ID card to a live selfie.
+![](app/src/main/res/drawable-mdpi/woman_with_licence.png)
 
-## Adding Ver-ID Credentials SDK in Your Android Studio Project
+The project contains a sample application that uses Microblink's [BlinkID SDK](https://github.com/BlinkID/blinkid-android) to scan an ID card. The app uses [Ver-ID SDK](https://github.com/AppliedRecognition/Ver-ID-UI-Android) to detect a face on the captured ID card and compare it to a live selfie taken with the Android device's camera.
+
+## Adding Ver-ID to your Android Studio project
 
 1. [Request an API secret](https://dev.ver-id.com/admin/register) for your app.
-1. Open your app module's **gradle.build** file.
-1. Add:
+1. Open your app module's **gradle.build** file and add:
 
     ```groovy
     repositories {
-	    jcenter()
-	    maven { url 'http://maven.microblink.com' }
-	    maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
+        maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
+    }
+    
+    dependencies {
+        implementation 'com.appliedrec.verid:rx:[1.6,2.0['
+        implementation 'com.appliedrec.verid:ui:[1.14.4,2.0.0['
     }
     ```
-1. If your app is targeting Android API level 21+ add:
-
-   ```groovy
-	dependencies {
-		implementation 'com.appliedrec:id-capture:6.0.3'
-	}
-   ```
-1. If your app is targeting Android API level 18–21 add:
-
-   ```groovy
-	dependencies {
-		implementation 'com.appliedrec:id-capture-api18:6.0.3'
-	}
-   ```
-1. If you need to support both Android API level 18–20 and 21+ you may want to create product flavours. For example:
-
-	```groovy
-	android {
-		flavorDimensions "apiLevel"
-		productFlavors {
-			api18 {
-				dimension "apiLevel"
-				minSdkVersion 18
-				maxSdkVersion 20
-			}
-			api21 {
-				dimension "apiLevel"
-				minSdkVersion 21
-			}
-		}
-	}
-	dependencies {
-		api21Implementation 'com.appliedrec:id-capture:6.0.3'
-		api18Implementation 'com.appliedrec:id-capture-api18:6.0.3'
-	}
-	```
+    
 1. Open your app's **AndroidManifest.xml** file and add the following tag in `<application>` replacing `[your API secret]` with the API secret your received in step 1:
 
     ~~~xml
@@ -59,275 +27,208 @@ The Ver-ID Credentials SDK allows your app to capture an image of the user's ID 
         android:name="com.appliedrec.verid.apiSecret"
         android:value="[your API secret]" />
     ~~~
-	
-## Getting Started with the Ver-ID Credentials API
-To scan an ID card your app will start an activity with a Ver-ID ID Capture intent and receive the result in `onActivityResult`.
 
-1. Load Ver-ID
-2. Construct settings
-3. Construct an intent
-4. Start activity for result
-5. Receive result
-6. Unload Ver-ID
+## Adding Microblink to your Android Studio project
 
-## Example 1 – Capture ID Card
+1. Apply for an API key on the [Microblink website](https://microblink.com/products/blinkid).
+1. Open your app module's **gradle.build** file and add:
 
-~~~java
-public class MyActivity extends AppCompatActivity {
-	
-	private static final int REQUEST_CODE_ID_CAPTURE = 0;
-	private VerID verID;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.my_activity);
-		new VerIDFactory(this, new VerIDFactoryDelegate() {
-            @Override
-            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
-            	MyActivity.this.verID = verID;
-				// Ver-ID is now loaded. Here you may do things 
-				// like enable buttons that control the ID capture.
-            }
-
-            @Override
-            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
-                loadingIndicatorView.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
-            }
-        }).createVerID();
-	}
-
-	/**
-	 * Call this method to start the ID capture 
-	 * (for example in response to a button click).
-	 */
-	void runIdCapture() {
-		// If you want to show a guide to the user set this to true
-		boolean showGuide = true;
-		// If you want to show the result of the scan to the user set this to true
-		boolean showResult = true;
-		// Set the region where the requested card was issued.
-		// If you want the API to guess use the RegionUtil utility class.
-		// The utility class will base the region on the device's SIM card provider 
-		// or on the device's locale. If you want the user to choose the region
-		// set the variable to Region.GENERAL.
-		IDDocument document = RegionUtil.getDefaultDocumentForUserRegion(this);
-		// Construct ID capture settings
-		VerIDIDCaptureSettings settings = new VerIDIDCaptureSettings(document, showGuide, showResult);
-		// Construct an intent
-		VerIDIDCaptureIntent intent = new VerIDIDCaptureIntent(this, verID, settings);
-		// Start the ID capture activity
-		startActivityForResult(intent, REQUEST_CODE_ID_CAPTURE);
-	}
-	
-	/**
-	 * Listen for the result of the ID capture and display 
-	 * the card and detected face in your activity.
-	 */
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == REQUEST_CODE_ID_CAPTURE && resultCode == RESULT_OK && data != null) {
-			// Extract the ID capture result from the data intent
-			IDDocument document = data.getParcelable(IDCaptureActivity.EXTRA_ID_DOCUMENT);
-			if (document == null || document.getFaceBounds() == null) {	
-				return;
-			}
-			Uri imageUri = document.getImageUri();
-			if (imageUri == null || face == null) {
-				return;
-			}
-			/**
-			 * Display the card
-			 */
-			((ImageView)findViewById(R.id.cardImageView)).setImageURI(imageUri);
-		
-			// Get the bounds of the face detected on the ID card
-			Rect faceBounds = new Rect();
-			document.getFaceBounds().round(faceBounds);
-			// Load the image of the front of the card
-			InputStream inputStream = getContentResolver().openInputStream(imageUri);
-			try {
-				Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
-				if (cardBitmap != null) {
-					// Crop the card image to the face bounds
-					Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
-					
-					/**
-					 * Display the face
-					 */
-					((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
-				}
-			} catch (FileNotFoundException e) {
-			}
-			
-			/**
-			 * Display the text from the card
-			 */
-			((TextView)findViewById(R.id.cardTextView)).setText(document.getDescription());
-		}
-	}
-}
-~~~
-
-## Example 2 – Capture Live Face
-
-~~~java
-public class MyActivity extends AppCompatActivity {
-	
-	private static final int REQUEST_CODE_LIVENESS_DETECTION = 1;
-	private VerID verID;
-
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.my_activity);
-		new VerIDFactory(this, new VerIDFactoryDelegate() {
-            @Override
-            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
-            	MyActivity.this.verID = verID;
-				// Ver-ID is now loaded. Here you may do things 
-				// like enable buttons that control the ID capture.
-            }
-
-            @Override
-            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
-                loadingIndicatorView.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
-            }
-        }).createVerID();	
+    ```groovy
+    repositories {
+        maven { url 'http://maven.microblink.com' }
     }
+    
+    dependencies {
+        implementation('com.microblink:blinkid:5.0.0@aar') {
+            transitive = true
+        }
+    }
+    ```
+
+1. Detailed instructions are available on the [BlinkID Github page](https://github.com/BlinkID/blinkid-android#-sdk-integration). 
+
+
+## Example 1 – Capture ID card
+
+~~~java
+public class MyActivity extends AppCompatActivity {
 	
-	/**
-	 * Call this method to start the liveness detection session
-	 * (for example in response to a button click).
-	 */
-	void runLivenessDetection() {
-		// Create liveness detection settings
-		LivenessDetectionSessionSettings settings = new LivenessDetectionSessionSettings();
-		// Construct the liveness detection intent
-		VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this, verID, settings);
-		// Start the liveness detection activity
-		startActivityForResult(intent, REQUEST_CODE_LIVENESS_DETECTION);
+    private RecognizerBundle recognizerBundle;
+    private static final int REQUEST_CODE_ID_CAPTURE = 0;
+    
+    /**
+     * Call this method to start the ID capture 
+     * (for example in response to a button click).
+     */
+    void runIdCapture() {
+        try {
+            // Set the Microblink licence key
+            // This example assumes the key is set in your build.gradle file
+            MicroblinkSDK.setLicenseKey(BuildConfig.BLINK_LICENCE_KEY, this);
+        } catch (InvalidLicenceKeyException e) {
+            // You'll want to handle this better
+            return;
+        }
+        // To enable high-res images in intents
+        MicroblinkSDK.setIntentDataTransferMode(IntentDataTransferMode.PERSISTED_OPTIMISED);
+        // To detect US or Canadian ID card
+        UsdlCombinedRecognizer recognizer = new UsdlCombinedRecognizer();
+        recognizer.setEncodeFullDocumentImage(true);
+        // For ID cards issued outside USA or Canada uncomment the following 2 lines and delete the 2 lines above
+        // BlinkIdCombinedRecognizerrecognizer = new BlinkIdCombinedRecognizer();
+        // recognizer.setEncodeFullDocumentImage(true);
+        SuccessFrameGrabberRecognizer successFrameGrabberRecognizer = new SuccessFrameGrabberRecognizer(recognizer);
+        recognizerBundle = new RecognizerBundle(successFrameGrabberRecognizer);
+        startActivityForResult(intent, REQUEST_CODE_ID_CAPTURE);
 	}
 	
-	/**
-	 * Listen for the result of the liveness detection
-	 */
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == REQUEST_CODE_LIVENESS_DETECTION && resultCode == RESULT_OK && data != null) {
-			// Extract the liveness detection session result from the data intent
-			VerIDSessionResult verIDSessionResult = data.getParcelableExtra(VerIDSessionActivity.EXTRA_RESULT);
-			if (verIDSessionResult == null || verIDSessionResult.getError() != null) {
-				return;
-			}
-			// Get the face and image URI of the first captured selfie
-			HashMap<Face,Uri> faceImages = verIDSessionResult.getFaceImages(Bearing.STRAIGHT);
-			if (faceImages.isEmpty()) {
-				return;
-			}
-			Map.Entry<Face,Uri> faceImage = faceImages.entrySet().iterator().next();
-			// Get the bounds of the face detected in the first selfie
-			Rect faceBounds = new Rect();
-			faceImage.getKey().getBoundingBox().round(faceBounds);
-			InputStream inputStream = getContentResolver().openInputStream(imageUri);
-			try {
-				Bitmap cardBitmap = BitmapFactory.decodeStream(inputStream);
-				if (cardBitmap != null) {
-					// Crop the selfie to the face bounds
-					Bitmap faceBitmap = Bitmap.createBitmap(cardBitmap, faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
-					
-					/**
-					 * Display the face
-					 */
-					((ImageView)findViewById(R.id.faceImageView)).setImageBitmap(faceBitmap);
-				}
-			} catch (FileNotFoundException e) {
-			}
+    /**
+     * Listen for the result of the ID capture and display 
+     * the card and detected face in your activity.
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_ID_CAPTURE && resultCode == RESULT_OK && data != null) {
+            // Load the ID capture result from the data intent
+            recognizerBundle.loadFromIntent(data);
+
+            Recognizer firstRecognizer = recognizerBundle.getRecognizers()[0];
+            SuccessFrameGrabberRecognizer successFrameGrabberRecognizer = (SuccessFrameGrabberRecognizer) firstRecognizer;
+            
+            byte[] frontImage;
+            if (successFrameGrabberRecognizer.getSlaveRecognizer() instanceof UsdlCombinedRecognizer) {
+                frontImage = ((UsdlCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult().getEncodedFullDocumentImage();
+            } else if (successFrameGrabberRecognizer.getSlaveRecognizer() instanceof BlinkIdCombinedRecognizer) {
+                frontImage = ((BlinkIdCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult().getEncodedFrontFullDocumentImage();
+            } else {
+                return;
+            }
+            // Save the image of the front of the card in your app's files
+            File imageFile = new File(getFilesDir(), "cardFront.jpg");
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(frontImage);
+            int read;
+            byte[] buffer = new byte[512];
+            while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.close();
+            inputStream.close();
 		}
-	}	
+	}
 }
 ~~~
 
-## Example 3 - Compare Face on ID Card with Live Face
-
-Building on example 1 and 2, you can use the results of the ID capture and liveness detection sessions and compare their faces.
-
-**Important:** When requesting the live face you must set `includeFaceTemplatesInResult` of the `VerIDLivenessDetectionSessionSettings` and `detectFaceForRecognition` of the `VerIDIDCaptureSettings` object to `true` to extract the captured face template and make it available for recognition.
+## Example 2 – Capture live face
 
 ~~~java
-public class CaptureResultActivity extends AppCompatActivity {
-
-    // Live face and ID capture results
-    private VerIDSessionResult livenessDetectionResult;
-    private IDDocument document;
-
+public class MyActivity extends AppCompatActivity {
+	
+    private static final int REQUEST_CODE_LIVENESS_DETECTION = 1;
+    private RxVerID rxVerID;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set up views
-        // Obtain idCaptureResult and livenessDetectionResult, e.g. from intent parcelable
-        // ...
-        if (document == null || livenessDetectionResult == null) {
-	        setAuthenticated(null);
-        }        
-        if (document.getFaceSuitableForRecognition() != null && livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT).length > 0) {
-        	new VerIDFactory(this, new VerIDFactoryDelegate() {
-	            @Override
-	            public void veridFactoryDidCreateEnvironment(VerIDFactory verIDFactory, VerID verID) {
-	            	compareFaceTemplates(verID);
-	            }
-	
-	            @Override
-	            public void veridFactoryDidFailWithException(VerIDFactory verIDFactory, Exception e) {
-	                Toast.makeText(MainActivity.this, R.string.verid_failed_to_load, Toast.LENGTH_SHORT).show();
-	            }
-	        }).createVerID();
-            return;
-        }
-        setAuthenticated(null);
+        setContentView(R.layout.activity_my);
+        rxVerID = new RxVerID.Builder(this).build();
     }
-
-    private void compareFaceTemplates(VerID verId) {
-    	AsyncTask.execute(new Runnable() {
-    		@Override
-    		public void run() {
-    			Float score = null;
-		        RecognizableFace cardFace = document.getFaceSuitableForRecognition();
-		        RecognizableFace[] liveFaces = livenessDetectionResult.getFacesSuitableForRecognition(Bearing.STRAIGHT);
-		        try {
-		        	float score = verID.getFaceRecognition().compareSubjectFacesToFaces(new RecognizableFace[]{cardFace}, liveFaces);
-		        	float threshold = verID.getFaceRecognition().getAuthenticationThreshold();
-		        	// If score >= threshold the user can be considered authenticated against the ID card
-		        	final boolean authenticated = 
-			        runOnUiThread(new Runnable() {
-			        	@Override
-			        	public void run() {
-				        	updateScore(score);
-				        }
-			        });
-		        } catch (Exception e) {
-		        	runOnUiThread(new Runnable() {
-			        	@Override
-			        	public void run() {
-				        	setAuthenticated(null);
-				        }
-			        });
-		        }
-    		}
-		});
+        	
+    /**
+     * Call this method to start the liveness detection session
+     * (for example in response to a button click).
+     */
+    void runLivenessDetection() {
+        rxVerID.getVerID() // Load Ver-ID
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                verID -> {
+                    // Create liveness detection settings
+                    LivenessDetectionSessionSettings settings = new LivenessDetectionSessionSettings();
+                    // Construct the liveness detection intent
+                    VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this, verID, settings);
+                    // Start the liveness detection activity
+                    startActivityForResult(intent, REQUEST_CODE_LIVENESS_DETECTION);
+                },
+                error -> {
+                    // Ver-ID failed to load
+                });
     }
-
-    @UiThread
-    private void setAuthenticated(Boolean authenticated) {
-        if (authenticated == null) {
-            // Display error
+    	
+    /**
+     * Listen for the result of the liveness detection
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_LIVENESS_DETECTION && resultCode == RESULT_OK) {
+            rxVerID.getSessionResultFromIntent(data)
+                .flatMapObservable(result -> rxVerID.getFacesAndImageUrisFromSessionResult(result, Bearing.STRAIGHT))
+                .filter(detectedFace -> detectedFace.getFace() instanceof RecognizableFace)
+                .firstOrError()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        detectedFace -> {
+                            // You can now use the face for face recognition:
+                            RecognizableFace recognizableFace = (RecognizableFace) detectedFace.getFace();
+                        },
+                        error -> {
+                            // Failed to get the first face from the result
+                        }
+                ));
         }
+    }	
+}
+~~~
+
+## Example 3 - Compare face on ID card with live face
+
+Building on example 1 and 2, you can use the results of the ID capture and liveness detection sessions and compare their faces.
+
+This class takes as input the image file of the front of the card captured in example 1 and the `recognizableFace` captured in example 2.
+
+~~~java
+class FaceComparison {
+    
+    private final RxVerID rxVerID;
+    
+    /**
+     * Pass an instance of RxVerID to the constructor
+     */
+    FaceComparison(RxVerID rxVerID) {
+        this.rxVerID = rxVerID;
+    }
+    
+    /**
+     * This function returns a Single whose value is a pair of Floats.
+     * The first Float is the comparison score between the two faces.
+     * The second Float in the pair is the threshold required to consider the two faces as authenticated against each other.
+     */
+    Single<Pair<Float,Float>> compareIDCardToLiveFace(Uri imageFileUri, RecognizableFace face) {
+        return rxVerID.detectRecognizableFacesInImage(imageFileUri, 1)
+            .singleOrError()
+            .flatMap(cardFace -> rxVerID.compareFaceToFaces(cardFace, new RecognizableFace[]{face}))
+            .flatMap(score -> rxVerID.getVerID().map(verID -> new Pair<>(score, verID.getFaceRecognition().getAuthenticationThreshold())))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread());
     }
 }
 ~~~
 
-[Reference documentation](https://appliedrecognition.github.io/Ver-ID-Credentials-Android/)
+## Links
+
+### Ver-ID
+- [Github](https://github.com/AppliedRecognition/Ver-ID-UI-Android)
+- [Reference documentation](https://appliedrecognition.github.io/Ver-ID-UI-Android/)
+
+### Rx-Ver-ID
+- [Github](https://github.com/AppliedRecognition/Rx-Ver-ID-Android)
+- [Reference documentation](https://appliedrecognition.github.io/Rx-Ver-ID-Android/)
+
+### BlinkID
+- [Github](https://github.com/BlinkID/blinkid-android)
+- [Reference documentation](https://blinkid.github.io/blinkid-android/)

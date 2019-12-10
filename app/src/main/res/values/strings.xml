@@ -1,0 +1,23 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">ID Capture</string>
+    <string name="about_text">This app uses the Ver-ID SDK to detect and recognize faces in ID cards captured using Microblink\'s BlinkID SDK.\\n\\nScan your ID card. Ver-ID will detect your face on the front of the ID card. Ver-ID will then proceed to capture your face and compare it to the face on the ID card.</string>
+    <string name="compare_to_selfie">Compare to Selfie</string>
+    <string name="scan_id_card">Scan ID Card</string>
+    <string name="home_instructions">1. Scan your ID card\\n2. Compare the face on \\nthe ID card to a selfie</string>
+    <string name="result_score"><xliff:g id="score" example="3.60">%1$.02f</xliff:g> (<xliff:g id="threshold" example="4.00">%2$.02f</xliff:g> needed to pass)></string>
+    <string name="what_does_it_mean">What does it mean?</string>
+    <string name="score">Score</string>
+    <string name="false_acceptance_rate">False acceptance rate</string>
+    <string name="about">About</string>
+    <string name="score_explanation">Score explanation</string>
+    <string name="supported_documents">Supported documents</string>
+    <string name="comparison_result">Comparison result</string>
+    <string name="your_id_card">Your ID card</string>
+    <string name="id_capture">ID capture</string>
+    <string name="invalid_mb_key">Invalid Microblink licence key</string>
+    <string name="select_region">Select issuing region</string>
+    <string name="north_america">North America</string>
+    <string name="other">Other</string>
+    <string name="error">Error</string>
+    <string name="face_comparison_failed">Face comparison failed</string>
+</resources>

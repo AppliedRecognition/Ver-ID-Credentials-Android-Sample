@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ResultActivity">
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="cardFaceImageView,dialView,liveFaceImageView,scoreLayout" />
+
+    <ImageView
+        android:id="@+id/cardFaceImageView"
+        android:layout_width="100dp"
+        android:layout_height="125dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toTopOf="@+id/dialView"
+        app:layout_constraintDimensionRatio=""
+        app:layout_constraintEnd_toStartOf="@+id/liveFaceImageView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <ImageView
+        android:id="@+id/liveFaceImageView"
+        android:layout_width="100dp"
+        android:layout_height="125dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="@+id/cardFaceImageView"
+        app:layout_constraintDimensionRatio=""
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/cardFaceImageView"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <com.appliedrec.credentials.app.DialView
+        android:id="@+id/dialView"
+        android:layout_width="240dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toTopOf="@+id/scoreLayout"
+        app:layout_constraintEnd_toEndOf="@+id/liveFaceImageView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/cardFaceImageView"
+        app:layout_constraintTop_toBottomOf="@+id/cardFaceImageView" />
+
+    <LinearLayout
+        android:id="@+id/scoreLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dialView">
+
+        <TextView
+            android:id="@+id/scoreTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+
+        <TextView
+            android:id="@+id/scoreExplanationLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/what_does_it_mean"
+            android:paddingLeft="8dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+            android:textColor="@color/colorAccent" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
