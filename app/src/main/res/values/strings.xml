@@ -4,7 +4,7 @@
     <string name="compare_to_selfie">Compare to Selfie</string>
     <string name="scan_id_card">Scan ID Card</string>
     <string name="home_instructions">1. Scan your ID card\n2. Compare the face on \nthe ID card to a selfie</string>
-    <string name="result_score"><xliff:g id="score" example="3.60">%1$.02f</xliff:g> (<xliff:g id="threshold" example="4.00">%2$.02f</xliff:g> needed to pass)</string>
+    <string name="result_score"><xliff:g example="3.60" id="score">%1$.02f</xliff:g> (<xliff:g example="4.00" id="threshold">%2$.02f</xliff:g> needed to pass)</string>
     <string name="what_does_it_mean">What does it mean?</string>
     <string name="score">Score</string>
     <string name="false_acceptance_rate">False acceptance rate</string>
@@ -20,4 +20,5 @@
     <string name="other">Other</string>
     <string name="error">Error</string>
     <string name="face_comparison_failed">Face comparison failed</string>
+    <string name="details">Details</string>
 </resources>

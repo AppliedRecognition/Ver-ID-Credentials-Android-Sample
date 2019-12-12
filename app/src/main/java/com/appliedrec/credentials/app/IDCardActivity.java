@@ -4,8 +4,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
@@ -25,8 +28,10 @@ import io.reactivex.schedulers.Schedulers;
 public class IDCardActivity extends RxVerIDActivity {
 
     public static final String EXTRA_DETECTED_FACE = "com.appliedrec.verid.EXTRA_DETECTED_FACE";
+    public static final String EXTRA_DOCUMENT_DATA = "com.appliedrec.verid.EXTRA_DOCUMENT_DATA";
     private static final int REQUEST_CODE_LIVE_FACE = 1;
     private DetectedFace cardFace;
+    private DocumentData documentData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +58,34 @@ public class IDCardActivity extends RxVerIDActivity {
                         }
                 ));
             }
+            documentData = intent.getParcelableExtra(EXTRA_DOCUMENT_DATA);
+            invalidateOptionsMenu();
         }
         findViewById(R.id.button).setOnClickListener(v -> startLivenessDetection());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.card, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_details).setVisible(documentData != null && cardFace != null && cardFace.getImageUri() != null);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_details) {
+            Intent intent = new Intent(this, DocumentDetailsActivity.class);
+            intent.putExtra(EXTRA_DOCUMENT_DATA, documentData);
+//            intent.putExtra(EXTRA_DETECTED_FACE, cardFace);
+            startActivity(intent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

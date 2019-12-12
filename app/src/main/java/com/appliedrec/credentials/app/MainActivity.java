@@ -38,6 +38,7 @@ public class MainActivity extends RxVerIDActivity {
     private RecognizerBundle recognizerBundle;
     private ProgressBar progressBar;
     private Group mainUIGroup;
+    private DocumentData documentData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,10 +102,15 @@ public class MainActivity extends RxVerIDActivity {
             SuccessFrameGrabberRecognizer successFrameGrabberRecognizer = (SuccessFrameGrabberRecognizer) firstRecognizer;
 
             byte[] frontImage;
+            documentData = null;
             if (successFrameGrabberRecognizer.getSlaveRecognizer() instanceof UsdlCombinedRecognizer) {
-                frontImage = ((UsdlCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult().getEncodedFullDocumentImage();
+                UsdlCombinedRecognizer.Result result = ((UsdlCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult();
+                frontImage = result.getEncodedFullDocumentImage();
+                documentData = new DocumentData(result);
             } else if (successFrameGrabberRecognizer.getSlaveRecognizer() instanceof BlinkIdCombinedRecognizer) {
-                frontImage = ((BlinkIdCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult().getEncodedFrontFullDocumentImage();
+                BlinkIdCombinedRecognizer.Result result = ((BlinkIdCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult();
+                frontImage = result.getEncodedFrontFullDocumentImage();
+                documentData = new DocumentData(result);
             } else {
                 return;
             }
@@ -189,6 +195,9 @@ public class MainActivity extends RxVerIDActivity {
         mainUIGroup.setVisibility(View.VISIBLE);
         Intent intent = new Intent(this, IDCardActivity.class);
         intent.putExtra(IDCardActivity.EXTRA_DETECTED_FACE, face);
+        if (documentData != null) {
+            intent.putExtra(IDCardActivity.EXTRA_DOCUMENT_DATA, documentData);
+        }
         startActivity(intent);
     }
 
