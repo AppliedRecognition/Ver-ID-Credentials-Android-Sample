@@ -21,4 +21,8 @@
     <string name="error">Error</string>
     <string name="face_comparison_failed">Face comparison failed</string>
     <string name="details">Details</string>
+    <string name="false_acceptance_rates">False acceptance rates</string>
+    <string name="far_explanation">Setting Ver-ID face recognition\'s authentication threshold to <xliff:g example="3.60" id="score">%1$.02f</xliff:g> means that there is a <xliff:g example="0.003" id="probability">%2$.5f</xliff:g> %% probability of false acceptance.</string>
+    <string name="card_face">Card face</string>
+    <string name="live_face">Live face</string>
 </resources>

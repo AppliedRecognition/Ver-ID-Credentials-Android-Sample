@@ -16,13 +16,13 @@
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
         <activity
             android:name=".DocumentDetailsActivity"
-            android:label="@string/details"></activity>
+            android:label="@string/details" />
         <activity
             android:name=".AboutActivity"
             android:label="@string/about" />
         <activity
             android:name=".ScoreTableActivity"
-            android:label="@string/score_explanation" />
+            android:label="@string/false_acceptance_rates" />
         <activity
             android:name=".WebViewActivity"
             android:label="@string/supported_documents" />

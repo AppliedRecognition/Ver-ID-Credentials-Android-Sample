@@ -16,10 +16,13 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import com.appliedrec.verid.core.DetectedFace;
 import com.appliedrec.verid.core.RecognizableFace;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
 import org.javatuples.Pair;
-import org.javatuples.Quartet;
+import org.javatuples.Triplet;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -58,7 +61,8 @@ public class ResultActivity extends RxVerIDActivity {
         DetectedFace[] detectedFacesArray = new DetectedFace[detectedFaces.size()];
         detectedFaces.toArray(detectedFacesArray);
         TextView scoreTextView = findViewById(R.id.scoreTextView);
-        DialView dialView = findViewById(R.id.dialView);
+        TextView farExplanationTextView = findViewById(R.id.farExplanation);
+
         findViewById(R.id.scoreExplanationLink).setOnClickListener(view -> showScoreExplanation());
 
         resultGroup.setVisibility(View.GONE);
@@ -73,18 +77,21 @@ public class ResultActivity extends RxVerIDActivity {
                         }))
                 .toList()
                 .flatMap(list -> getRxVerID().compareFaceToFaces((RecognizableFace)list.get(0).getValue0().getFace(), new RecognizableFace[]{(RecognizableFace)list.get(1).getValue0().getFace()})
-                        .map(score -> new Pair<>(score, list)))
-                .flatMap(result -> getRxVerID().getVerID().map(verID -> new Quartet<>(result.getValue0(), verID.getFaceRecognition().getAuthenticationThreshold(), verID.getFaceRecognition().getMaxAuthenticationScore(), result.getValue1())))
+                        .map(score -> {
+                            NormalDistribution normalDistribution = new NormalDistribution();
+                            double probability = normalDistribution.cumulativeProbability(score);
+                            return new Triplet<Float, List<Pair<DetectedFace,RoundedBitmapDrawable>>, Double>(score, list, (1.0-probability)*100);
+                        }))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         result -> {
                             progressBar.setVisibility(View.GONE);
                             resultGroup.setVisibility(View.VISIBLE);
-                            cardFaceImageView.setImageDrawable(result.getValue3().get(0).getValue1());
-                            liveFaceImageView.setImageDrawable(result.getValue3().get(1).getValue1());
-                            scoreTextView.setText(getString(R.string.result_score, result.getValue0(), result.getValue1()));
-                            dialView.setScore(result.getValue0(), result.getValue1(), result.getValue2());
+                            cardFaceImageView.setImageDrawable(result.getValue1().get(0).getValue1());
+                            liveFaceImageView.setImageDrawable(result.getValue1().get(1).getValue1());
+                            scoreTextView.setText(String.format(Locale.getDefault(), "%.02f", result.getValue0()));
+                            farExplanationTextView.setText(getString(R.string.far_explanation, result.getValue0(), result.getValue2()));
                         },
                         error -> {
                             progressBar.setVisibility(View.GONE);

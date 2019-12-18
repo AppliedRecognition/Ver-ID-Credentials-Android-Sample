@@ -20,7 +20,7 @@ ext {
     rxveridVersion = '[1.6,2.0['
     blinkidVersion = '[5.0.0,6.0.0['
     versionMajor = 7
-    versionMinor = 1
+    versionMinor = 2
     versionPatch = 0
     versionClassifier = null
     versionClassifierVersion = ""
@@ -46,6 +46,7 @@ allprojects {
         maven { url 'https://maven.fabric.io/public' }
         maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
         maven { url 'http://maven.microblink.com' }
+        maven { url 'https://mvnrepository.com/artifact/org.apache.commons/commons-math3' }
     }
 }
 
