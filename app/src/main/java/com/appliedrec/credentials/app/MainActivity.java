@@ -53,6 +53,9 @@ public class MainActivity extends RxVerIDActivity {
         addDisposable(licenceKeyUpdater
                 .getSavedLicenceKey()
                 .flatMapCompletable(licenceKeyUpdater::setLicenceKey)
+                .onErrorResumeNext(error -> licenceKeyUpdater.deleteSavedLicenceKey()
+                        .andThen(licenceKeyUpdater.getSavedLicenceKey())
+                        .flatMapCompletable(licenceKeyUpdater::setLicenceKey))
                 .onErrorResumeNext(error -> licenceKeyUpdater
                         .getLicenceKeyFromRemote()
                         .flatMapCompletable(licenceKeyUpdater::setLicenceKey))
@@ -84,6 +87,10 @@ public class MainActivity extends RxVerIDActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.about) {
             showAbout();
+            return true;
+        }
+        if (item.getItemId() == R.id.settings) {
+            showSettings();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -203,5 +210,9 @@ public class MainActivity extends RxVerIDActivity {
 
     private void showAbout() {
         startActivity(new Intent(this, AboutActivity.class));
+    }
+
+    private void showSettings() {
+        startActivity(new Intent(this, SettingsActivity.class));
     }
 }

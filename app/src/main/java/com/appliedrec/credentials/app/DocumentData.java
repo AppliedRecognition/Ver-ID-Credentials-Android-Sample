@@ -16,6 +16,7 @@ public class DocumentData implements Parcelable {
     private String dateOfIssue;
     private String documentNumber;
     private String sex;
+    private String rawBarcode;
 
     public DocumentData(UsdlCombinedRecognizer.Result result) {
         firstName = result.getFirstName();
@@ -26,6 +27,7 @@ public class DocumentData implements Parcelable {
         dateOfIssue = result.getDateOfIssue().getOriginalDateString();
         documentNumber = result.getDocumentNumber();
         sex = result.getSex();
+        rawBarcode = result.getRawStringData();
     }
 
     public DocumentData(BlinkIdCombinedRecognizer.Result result) {
@@ -48,6 +50,7 @@ public class DocumentData implements Parcelable {
         dateOfIssue = in.readString();
         documentNumber = in.readString();
         sex = in.readString();
+        rawBarcode = in.readString();
     }
 
     public static final Creator<DocumentData> CREATOR = new Creator<DocumentData>() {
@@ -94,6 +97,10 @@ public class DocumentData implements Parcelable {
         return sex;
     }
 
+    public String getRawBarcode() {
+        return rawBarcode;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -109,5 +116,6 @@ public class DocumentData implements Parcelable {
         parcel.writeString(dateOfIssue);
         parcel.writeString(documentNumber);
         parcel.writeString(sex);
+        parcel.writeString(rawBarcode);
     }
 }

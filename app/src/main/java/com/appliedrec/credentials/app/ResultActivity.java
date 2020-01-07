@@ -91,7 +91,7 @@ public class ResultActivity extends RxVerIDActivity {
                             cardFaceImageView.setImageDrawable(result.getValue1().get(0).getValue1());
                             liveFaceImageView.setImageDrawable(result.getValue1().get(1).getValue1());
                             scoreTextView.setText(String.format(Locale.getDefault(), "%.02f", result.getValue0()));
-                            farExplanationTextView.setText(getString(R.string.far_explanation, result.getValue0(), result.getValue2()));
+                            farExplanationTextView.setText(getString(R.string.far_explanation, result.getValue2()));
                         },
                         error -> {
                             progressBar.setVisibility(View.GONE);

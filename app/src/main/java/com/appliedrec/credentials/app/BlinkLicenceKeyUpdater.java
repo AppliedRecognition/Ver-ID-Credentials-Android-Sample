@@ -41,6 +41,18 @@ class BlinkLicenceKeyUpdater {
         }).subscribeOn(Schedulers.io());
     }
 
+    Completable deleteSavedLicenceKey() {
+        return Completable.create(emitter -> {
+            try {
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+                preferences.edit().remove(BLINK_LICENCE_PREF_KEY).apply();
+                emitter.onComplete();
+            } catch (Exception e) {
+                emitter.onError(e);
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
     Single<String> getLicenceKeyFromRemote() {
         return Single.<String>create(emitter -> {
             try {
