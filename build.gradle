@@ -16,12 +16,13 @@ buildscript {
 
 ext {
     appcompatVersion = '[1.1.0,2.0.0['
-    veridVersion = '[1.14.4,2.0.0['
+    veridVersion = '[1.16.0,2.0.0['
     rxveridVersion = '[1.6,2.0['
     blinkidVersion = '[5.0.0,6.0.0['
+    veriduielementsVersion = '[1.0.0,2.0.0['
     versionMajor = 7
     versionMinor = 3
-    versionPatch = 0
+    versionPatch = 1
     versionClassifier = null
     versionClassifierVersion = ""
     minSdkVersion = 23

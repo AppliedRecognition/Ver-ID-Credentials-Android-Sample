@@ -11,10 +11,9 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
-        <activity android:name=".SettingsActivity"></activity>
+        <activity android:name=".SettingsActivity" />
         <activity
             android:name=".DocumentDetailsActivity"
             android:label="@string/details" />
@@ -22,14 +21,8 @@
             android:name=".AboutActivity"
             android:label="@string/about" />
         <activity
-            android:name=".ScoreTableActivity"
-            android:label="@string/false_acceptance_rates" />
-        <activity
             android:name=".WebViewActivity"
             android:label="@string/supported_documents" />
-        <activity
-            android:name=".ResultActivity"
-            android:label="@string/comparison_result" />
         <activity
             android:name=".IDCardActivity"
             android:label="@string/your_id_card" />
@@ -44,8 +37,8 @@
         </activity>
 
         <meta-data
-            android:name="com.appliedrec.verid.apiSecret"
-            android:value="f33570cf95f874b1b260ba4def154fb23618ab89a142a726a56d70e33128181e" />
+            android:name="com.appliedrec.verid.password"
+            android:value="${veridPassword}" />
     </application>
 
 </manifest>

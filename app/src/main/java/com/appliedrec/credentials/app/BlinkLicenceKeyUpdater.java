@@ -57,13 +57,7 @@ class BlinkLicenceKeyUpdater {
         return Single.<String>create(emitter -> {
             try {
                 String packageName = context.getApplicationContext().getPackageName();
-                String uri = new Uri.Builder()
-                        .scheme("https")
-                        .authority("dev.ver-id.com")
-                        .path("blink_key")
-                        .appendQueryParameter("package", packageName)
-                        .build().toString();
-                URL url = new URL(uri);
+                URL url = new URL("https://ver-id.s3.us-east-1.amazonaws.com/ios/microblink_keys/com.appliedrec.credentials.app.txt");
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
                 connection.setUseCaches(false);
                 connection.setRequestMethod("GET");

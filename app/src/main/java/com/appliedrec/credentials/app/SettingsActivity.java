@@ -9,6 +9,8 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.appliedrec.uielements.RxVerIDActivity;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
 public class SettingsActivity extends RxVerIDActivity {

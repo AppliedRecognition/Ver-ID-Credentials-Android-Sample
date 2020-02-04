@@ -14,6 +14,8 @@ import androidx.core.util.Pair;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.appliedrec.uielements.RxVerIDActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 

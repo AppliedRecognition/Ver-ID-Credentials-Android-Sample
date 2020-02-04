@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.Group;
 
+import com.appliedrec.uielements.RxVerIDActivity;
 import com.appliedrec.verid.core.Bearing;
 import com.appliedrec.verid.core.DetectedFace;
 import com.microblink.entities.recognizers.Recognizer;

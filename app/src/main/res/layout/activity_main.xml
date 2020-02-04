@@ -39,7 +39,6 @@
         app:srcCompat="@drawable/woman_with_licence" />
 
     <TextView
-        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/home_instructions"

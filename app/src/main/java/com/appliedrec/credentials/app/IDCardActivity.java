@@ -13,13 +13,13 @@ import androidx.annotation.Nullable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
+import com.appliedrec.uielements.RxVerIDActivity;
+import com.appliedrec.uielements.facecomparison.ResultActivity;
 import com.appliedrec.verid.core.Bearing;
 import com.appliedrec.verid.core.DetectedFace;
 import com.appliedrec.verid.core.LivenessDetectionSessionSettings;
 import com.appliedrec.verid.core.RecognizableFace;
 import com.appliedrec.verid.ui.VerIDSessionIntent;
-
-import java.util.ArrayList;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -81,7 +81,6 @@ public class IDCardActivity extends RxVerIDActivity {
         if (item.getItemId() == R.id.action_details) {
             Intent intent = new Intent(this, DocumentDetailsActivity.class);
             intent.putExtra(EXTRA_DOCUMENT_DATA, documentData);
-//            intent.putExtra(EXTRA_DETECTED_FACE, cardFace);
             startActivity(intent);
             return true;
         }
@@ -123,10 +122,8 @@ public class IDCardActivity extends RxVerIDActivity {
 
     private void showResult(DetectedFace detectedFace) {
         Intent intent = new Intent(this, ResultActivity.class);
-        ArrayList<DetectedFace> detectedFaces = new ArrayList<>();
-        detectedFaces.add(cardFace);
-        detectedFaces.add(detectedFace);
-        intent.putParcelableArrayListExtra(ResultActivity.EXTRA_DETECTED_FACES, detectedFaces);
+        intent.putExtra(ResultActivity.EXTRA_DETECTED_FACE1, cardFace);
+        intent.putExtra(ResultActivity.EXTRA_DETECTED_FACE2, detectedFace);
         startActivity(intent);
     }
 }
