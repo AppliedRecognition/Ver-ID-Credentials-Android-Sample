@@ -23,7 +23,7 @@ public class SettingsActivity extends RxVerIDActivity {
             ProgressBar progressBar = findViewById(R.id.progressBar);
             progressBar.setVisibility(View.INVISIBLE);
             SecureStorage secureStorage = new SecureStorage(this);
-            String password = secureStorage.getValueForKey(SecureStorage.CommonKeys.INTELLICHECK_API_KEY);
+            String password = secureStorage.getValueForKey();
             EditText passwordEditText = findViewById(R.id.password);
             Button testButton = findViewById(R.id.button);
             passwordEditText.setText(password);
@@ -43,10 +43,10 @@ public class SettingsActivity extends RxVerIDActivity {
                 public void afterTextChanged(Editable editable) {
                     String password = editable.toString().trim();
                     if (password.isEmpty()) {
-                        secureStorage.deleteValueForKey(SecureStorage.CommonKeys.INTELLICHECK_API_KEY);
+                        secureStorage.deleteValueForKey();
                         testButton.setEnabled(false);
                     } else {
-                        secureStorage.setValueForKey(password, SecureStorage.CommonKeys.INTELLICHECK_API_KEY);
+                        secureStorage.setValueForKey(password);
                         testButton.setEnabled(true);
                     }
                 }

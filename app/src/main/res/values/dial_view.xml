@@ -1,7 +1,0 @@
-<resources>
-    <declare-styleable name="DialView">
-        <attr name="needleWidth" format="dimension" />
-        <attr name="ovalThickness" format="dimension" />
-        <attr name="needleColor" format="color" />
-    </declare-styleable>
-</resources>

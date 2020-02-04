@@ -23,4 +23,7 @@
     <string name="live_face">Live face</string>
     <string name="failed_to_verify_barcode">Failed to verify barcode</string>
     <string name="settings">Settings</string>
+    <string name="intellicheck_api_key">Intellicheck API key</string>
+    <string name="test">Test</string>
+    <string name="about_intellicheck">Intellicheck verifies data from ID cards. Contact Applied Recognition for an API key.</string>
 </resources>

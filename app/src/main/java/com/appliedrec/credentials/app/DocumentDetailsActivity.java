@@ -25,10 +25,10 @@ public class DocumentDetailsActivity extends RxVerIDActivity {
 
     static class DocumentPropertyViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView keyTextView;
-        private TextView valueTextView;
+        private final TextView keyTextView;
+        private final TextView valueTextView;
 
-        public DocumentPropertyViewHolder(@NonNull View itemView) {
+        DocumentPropertyViewHolder(@NonNull View itemView) {
             super(itemView);
             keyTextView = itemView.findViewById(R.id.key);
             valueTextView = itemView.findViewById(R.id.value);
@@ -42,8 +42,8 @@ public class DocumentDetailsActivity extends RxVerIDActivity {
 
     static class DocumentDetailsAdapter extends RecyclerView.Adapter<DocumentPropertyViewHolder> {
 
-        private LayoutInflater layoutInflater;
-        private List<Pair<String,String>> documentProperties;
+        private final LayoutInflater layoutInflater;
+        private final List<Pair<String,String>> documentProperties;
 
         DocumentDetailsAdapter(Context context, List<Pair<String,String>> documentProperties) {
             layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -80,7 +80,7 @@ public class DocumentDetailsActivity extends RxVerIDActivity {
                 if (documentData.getRawBarcode() != null) {
                     try {
                         SecureStorage secureStorage = new SecureStorage(this);
-                        String intellicheckSecret = secureStorage.getValueForKey(SecureStorage.CommonKeys.INTELLICHECK_API_KEY);
+                        String intellicheckSecret = secureStorage.getValueForKey();
                         if (intellicheckSecret != null) {
                             IntellicheckBarcodeVerifier barcodeVerifier = new IntellicheckBarcodeVerifier(this, intellicheckSecret);
                             addDisposable(barcodeVerifier.parseBarcode(documentData.getRawBarcode()).toList().observeOn(AndroidSchedulers.mainThread()).subscribe(

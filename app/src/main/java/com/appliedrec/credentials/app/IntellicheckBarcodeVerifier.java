@@ -9,18 +9,16 @@ import android.util.Base64;
 import androidx.core.util.Pair;
 import androidx.preference.PreferenceManager;
 
-import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -29,12 +27,12 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 
-public class IntellicheckBarcodeVerifier {
+class IntellicheckBarcodeVerifier {
 
-    private String url;
-    private SharedPreferences sharedPreferences;
-    private String password;
-    private String appId;
+    private final String url;
+    private final SharedPreferences sharedPreferences;
+    private final String password;
+    private final String appId;
 
     public IntellicheckBarcodeVerifier(Context context, String password) {
         this.url = BuildConfig.INTELLICHECK_URL;
@@ -70,10 +68,10 @@ public class IntellicheckBarcodeVerifier {
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                 connection.setDoOutput(true);
                 connection.setDoInput(true);
-                byte[] body = new Uri.Builder()
+                byte[] body = Objects.requireNonNull(new Uri.Builder()
                         .appendQueryParameter("device_id", getDeviceId())
                         .appendQueryParameter("app_id", appId)
-                        .appendQueryParameter("password", password).build().getQuery().getBytes(StandardCharsets.UTF_8);
+                        .appendQueryParameter("password", password).build().getQuery()).getBytes(StandardCharsets.UTF_8);
                 OutputStream outputStream = connection.getOutputStream();
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(body);
                 int read;
@@ -121,7 +119,7 @@ public class IntellicheckBarcodeVerifier {
                         .appendQueryParameter("data", Base64.encodeToString(barcodeData, Base64.NO_WRAP))
                         .build()
                         .getQuery();
-                ByteArrayInputStream inputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
+                ByteArrayInputStream inputStream = new ByteArrayInputStream(Objects.requireNonNull(body).getBytes(StandardCharsets.UTF_8));
                 OutputStream outputStream = connection.getOutputStream();
                 int read;
                 byte[] buffer = new byte[512];

@@ -8,14 +8,14 @@ import com.microblink.entities.recognizers.blinkid.usdl.UsdlCombinedRecognizer;
 
 public class DocumentData implements Parcelable {
 
-    private String firstName;
-    private String lastName;
-    private String address;
-    private String dateOfBirth;
-    private String dateOfExpiry;
-    private String dateOfIssue;
-    private String documentNumber;
-    private String sex;
+    private final String firstName;
+    private final String lastName;
+    private final String address;
+    private final String dateOfBirth;
+    private final String dateOfExpiry;
+    private final String dateOfIssue;
+    private final String documentNumber;
+    private final String sex;
     private String rawBarcode;
 
     public DocumentData(UsdlCombinedRecognizer.Result result) {
@@ -41,7 +41,7 @@ public class DocumentData implements Parcelable {
         sex = result.getSex();
     }
 
-    protected DocumentData(Parcel in) {
+    private DocumentData(Parcel in) {
         firstName = in.readString();
         lastName = in.readString();
         address = in.readString();

@@ -37,7 +37,7 @@ String generateVersionName() {
     if (ext.versionClassifier != null) {
         versionName += "-" + ext.versionClassifier + ".${ext.versionClassifierVersion}"
     }
-    return versionName;
+    return versionName
 }
 
 allprojects {
