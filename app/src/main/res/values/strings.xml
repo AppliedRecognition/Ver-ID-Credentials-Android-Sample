@@ -11,9 +11,6 @@
     <string name="your_id_card">Your ID card</string>
     <string name="id_capture">ID capture</string>
     <string name="invalid_mb_key">Invalid Microblink licence key</string>
-    <string name="select_region">Select issuing region</string>
-    <string name="north_america">North America</string>
-    <string name="other">Other</string>
     <string name="error">Error</string>
     <string name="face_comparison_failed">Face comparison failed</string>
     <string name="details">Details</string>
@@ -26,4 +23,9 @@
     <string name="intellicheck_api_key">Intellicheck API key</string>
     <string name="test">Test</string>
     <string name="about_intellicheck">Intellicheck verifies data from ID cards. Contact Applied Recognition for an API key.</string>
+    <string name="front_and_back_dont_match">The front and the back of the licence don\'t seem to match.</string>
+    <string name="invalid_licence">Invalid licence</string>
+    <string name="proceed_anyway">Proceed anyway</string>
+    <string name="selfie">Selfie</string>
+    <string name="woman_holding_id_card">Woman holding ID card</string>
 </resources>

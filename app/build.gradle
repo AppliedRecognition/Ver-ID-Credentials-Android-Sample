@@ -12,6 +12,7 @@ android {
         versionCode rootProject.generateVersionCode()
         versionName rootProject.generateVersionName()
         buildConfigField "String", "BLINK_LICENCE_KEY", "\"" + blink5LicenceKey + "\""
+        buildConfigField "String", "BLINK_SUPPORTED_DOCUMENTS_URL", "\"https://github.com/BlinkID/blinkid-android/blob/master/documentation/BlinkIDRecognizer.md\""
         buildConfigField "String", "INTELLICHECK_URL", "\"https://dev.ver-id.com/id-check/parse-verify\""
         manifestPlaceholders = ["veridPassword": "8f821baf-4ae4-41cd-a175-91d7ef6a6db8"]
     }

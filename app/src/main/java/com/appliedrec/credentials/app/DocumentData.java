@@ -4,7 +4,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.microblink.entities.recognizers.blinkid.generic.BlinkIdCombinedRecognizer;
-import com.microblink.entities.recognizers.blinkid.usdl.UsdlCombinedRecognizer;
 
 public class DocumentData implements Parcelable {
 
@@ -17,18 +16,6 @@ public class DocumentData implements Parcelable {
     private final String documentNumber;
     private final String sex;
     private String rawBarcode;
-
-    public DocumentData(UsdlCombinedRecognizer.Result result) {
-        firstName = result.getFirstName();
-        lastName = result.getLastName();
-        address = result.getAddress();
-        dateOfBirth = result.getDateOfBirth().getOriginalDateString();
-        dateOfExpiry = result.getDateOfExpiry().getOriginalDateString();
-        dateOfIssue = result.getDateOfIssue().getOriginalDateString();
-        documentNumber = result.getDocumentNumber();
-        sex = result.getSex();
-        rawBarcode = result.getRawStringData();
-    }
 
     public DocumentData(BlinkIdCombinedRecognizer.Result result) {
         firstName = result.getFirstName();
