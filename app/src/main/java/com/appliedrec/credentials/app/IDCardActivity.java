@@ -3,6 +3,7 @@ package com.appliedrec.credentials.app;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,6 +30,7 @@ public class IDCardActivity extends RxVerIDActivity {
 
     public static final String EXTRA_DETECTED_FACE = "com.appliedrec.verid.EXTRA_DETECTED_FACE";
     public static final String EXTRA_DOCUMENT_DATA = "com.appliedrec.verid.EXTRA_DOCUMENT_DATA";
+    public static final String EXTRA_CARD_IMAGE_URI = "com.appliedrec.verid.EXTRA_CARD_IMAGE_URI";
     private static final int REQUEST_CODE_LIVE_FACE = 1;
     private DetectedFace cardFace;
     private DocumentData documentData;
@@ -40,11 +42,13 @@ public class IDCardActivity extends RxVerIDActivity {
         Intent intent = getIntent();
         if (intent != null) {
             cardFace = intent.getParcelableExtra(EXTRA_DETECTED_FACE);
-            if (cardFace != null) {
+            Uri cardImageUri = intent.getParcelableExtra(EXTRA_CARD_IMAGE_URI);
+            if (cardImageUri != null) {
                 ImageView imageView = findViewById(R.id.cardImageView);
+                imageView.setOnClickListener(view -> showCardDetails());
                 addDisposable(Single.create(emitter -> {
                     try {
-                        Bitmap bitmap = BitmapFactory.decodeFile(cardFace.getImageUri().getPath());
+                        Bitmap bitmap = BitmapFactory.decodeFile(cardImageUri.getPath());
                         RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
                         drawable.setCornerRadius((float)bitmap.getHeight()/16f);
                         emitter.onSuccess(drawable);
@@ -79,9 +83,7 @@ public class IDCardActivity extends RxVerIDActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_details) {
-            Intent intent = new Intent(this, DocumentDetailsActivity.class);
-            intent.putExtra(EXTRA_DOCUMENT_DATA, documentData);
-            startActivity(intent);
+            showCardDetails();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -104,6 +106,12 @@ public class IDCardActivity extends RxVerIDActivity {
                             }
                     ));
         }
+    }
+
+    private void showCardDetails() {
+        Intent intent = new Intent(this, DocumentDetailsActivity.class);
+        intent.putExtra(EXTRA_DOCUMENT_DATA, documentData);
+        startActivity(intent);
     }
 
     private void startLivenessDetection() {

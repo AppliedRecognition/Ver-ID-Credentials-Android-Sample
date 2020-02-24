@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.Group;
+import androidx.core.util.Pair;
 
 import com.appliedrec.uielements.RxVerIDActivity;
 import com.appliedrec.verid.core.Bearing;
@@ -101,9 +102,16 @@ public class MainActivity extends RxVerIDActivity {
 
     private void showCardFromResult(BlinkIdCombinedRecognizer.Result result) {
         byte[] frontImage = result.getEncodedFrontFullDocumentImage();
+        byte[] faceImage = result.getEncodedFaceImage();
         documentData = new DocumentData(result);
         addDisposable(Single.create(single -> {
             try {
+                if (frontImage.length == 0) {
+                    throw new Exception(getString(R.string.failed_to_collect_card_image));
+                }
+                if (faceImage.length == 0) {
+                    throw new Exception(getString(R.string.failed_to_detect_face_in_card));
+                }
                 File imageFile = new File(getFilesDir(), "cardFront.jpg");
                 FileOutputStream outputStream = new FileOutputStream(imageFile);
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(frontImage);
@@ -114,18 +122,29 @@ public class MainActivity extends RxVerIDActivity {
                 }
                 outputStream.close();
                 inputStream.close();
-                single.onSuccess(Uri.fromFile(imageFile));
+                Uri[] uris = new Uri[2];
+                uris[0] = Uri.fromFile(imageFile);
+                imageFile = File.createTempFile("verid_card_face_", ".jpg");
+                outputStream = new FileOutputStream(imageFile);
+                inputStream = new ByteArrayInputStream(faceImage);
+                while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
+                    outputStream.write(buffer, 0, read);
+                }
+                outputStream.close();
+                inputStream.close();
+                uris[1] = Uri.fromFile(imageFile);
+                single.onSuccess(uris);
             } catch (Exception e) {
-                single.onError(e);
+                single.onError(new Exception(getString(R.string.failed_to_save_image_of_card), e));
             }
-        }).cast(Uri.class)
-                .flatMapObservable(imageUri -> getRxVerID().detectRecognizableFacesInImage(imageUri, 1).map(face -> new DetectedFace(face, Bearing.STRAIGHT, imageUri)))
+        }).cast(Uri[].class)
+                .flatMapObservable(imageUri -> getRxVerID().detectRecognizableFacesInImage(imageUri[1], 1).switchIfEmpty(getRxVerID().detectRecognizableFacesInImage(imageUri[0], 1)).map(face -> new Pair<>(new DetectedFace(face, Bearing.STRAIGHT, imageUri[1]), imageUri[0])))
                 .singleOrError()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        this::showCard,
-                        this::showError
+                        pair -> showCard(pair.first, pair.second),
+                        error -> showError(new Exception(getString(R.string.failed_to_detect_face_in_card), error))
                 ));
     }
 
@@ -167,6 +186,8 @@ public class MainActivity extends RxVerIDActivity {
         BlinkIdCombinedRecognizer recognizer = new BlinkIdCombinedRecognizer();
         recognizer.setReturnFullDocumentImage(true);
         recognizer.setEncodeFullDocumentImage(true);
+        recognizer.setReturnFaceImage(true);
+        recognizer.setEncodeFaceImage(true);
         recognizerBundle = new RecognizerBundle(recognizer);
         BlinkIdUISettings uiSettings = new BlinkIdUISettings(recognizerBundle);
         uiSettings.enableHighResSuccessFrameCapture(true);
@@ -176,18 +197,23 @@ public class MainActivity extends RxVerIDActivity {
     private void showError(Throwable error) {
         progressBar.setVisibility(View.GONE);
         mainUIGroup.setVisibility(View.VISIBLE);
+        String message = error.getLocalizedMessage();
+        if (error.getCause() != null && error.getCause().getLocalizedMessage() != null && !error.getCause().getLocalizedMessage().isEmpty()) {
+            message += ": "+error.getCause().getLocalizedMessage();
+        }
         new AlertDialog.Builder(this)
                 .setTitle(R.string.error)
-                .setMessage(error.getLocalizedMessage())
+                .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
                 .create()
                 .show();
     }
 
-    private void showCard(DetectedFace face) {
+    private void showCard(DetectedFace face, Uri cardImageUri) {
         progressBar.setVisibility(View.GONE);
         mainUIGroup.setVisibility(View.VISIBLE);
         Intent intent = new Intent(this, IDCardActivity.class);
+        intent.putExtra(IDCardActivity.EXTRA_CARD_IMAGE_URI, cardImageUri);
         intent.putExtra(IDCardActivity.EXTRA_DETECTED_FACE, face);
         if (documentData != null) {
             intent.putExtra(IDCardActivity.EXTRA_DOCUMENT_DATA, documentData);

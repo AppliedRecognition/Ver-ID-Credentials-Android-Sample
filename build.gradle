@@ -23,7 +23,7 @@ ext {
     veriduielementsVersion = '[1.0.0,2.0.0['
     versionMajor = 7
     versionMinor = 5
-    versionPatch = 0
+    versionPatch = 1
     versionClassifier = null
     versionClassifierVersion = ""
     minSdkVersion = 23

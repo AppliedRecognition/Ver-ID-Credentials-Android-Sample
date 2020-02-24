@@ -28,4 +28,7 @@
     <string name="proceed_anyway">Proceed anyway</string>
     <string name="selfie">Selfie</string>
     <string name="woman_holding_id_card">Woman holding ID card</string>
+    <string name="failed_to_save_image_of_card">Failed to save an image of the ID card.</string>
+    <string name="failed_to_detect_face_in_card">Failed to detect a face in the ID card.</string>
+    <string name="failed_to_collect_card_image">Failed to collect image of the card.</string>
 </resources>

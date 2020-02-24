@@ -135,7 +135,6 @@ class IntellicheckBarcodeVerifier {
                     String response = new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
                     throw new Exception(response);
                 }
-                // TODO: Finish this
                 JsonReader jsonReader = new JsonReader(new InputStreamReader(connection.getInputStream()));
                 jsonReader.setLenient(true);
                 jsonReader.beginObject();
@@ -144,7 +143,7 @@ class IntellicheckBarcodeVerifier {
                         jsonReader.beginObject();
                         while (jsonReader.hasNext()) {
                             String name = jsonReader.nextName();
-                            if ("$".equals(name)) {
+                            if ("$".equals(name) || name == null || name.isEmpty()) {
                                 jsonReader.skipValue();
                             } else if ("testCard".equals(name)) {
                                 emitter.onNext(new Pair<>(name, jsonReader.nextBoolean() ? "Yes" : "No"));
