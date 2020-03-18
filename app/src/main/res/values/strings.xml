@@ -31,4 +31,12 @@
     <string name="failed_to_save_image_of_card">Failed to save an image of the ID card.</string>
     <string name="failed_to_detect_face_in_card">Failed to detect a face in the ID card.</string>
     <string name="failed_to_collect_card_image">Failed to collect image of the card.</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
+    <string name="date_of_birth">Date of birth</string>
+    <string name="sex">Sex</string>
+    <string name="address">Address</string>
+    <string name="date_of_issue">Date of issue</string>
+    <string name="date_of_expiry">Date of expiry</string>
+    <string name="document_number">Document number</string>
 </resources>
