@@ -7,14 +7,17 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
+import androidx.core.util.Pair;
 
-import com.appliedrec.uielements.RxVerIDActivity;
+import com.appliedrec.credentials.app.databinding.ActivityIdcardBinding;
+import com.appliedrec.rxverid.RxVerIDActivity;
+import com.appliedrec.rxverid.SchedulersTransformer;
 import com.appliedrec.uielements.facecomparison.ResultActivity;
 import com.appliedrec.verid.core.Bearing;
 import com.appliedrec.verid.core.DetectedFace;
@@ -22,6 +25,10 @@ import com.appliedrec.verid.core.LivenessDetectionSessionSettings;
 import com.appliedrec.verid.core.RecognizableFace;
 import com.appliedrec.verid.ui.VerIDSessionIntent;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -38,14 +45,14 @@ public class IDCardActivity extends RxVerIDActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_idcard);
+        ActivityIdcardBinding viewBinding = ActivityIdcardBinding.inflate(getLayoutInflater());
+        setContentView(viewBinding.getRoot());
         Intent intent = getIntent();
         if (intent != null) {
             cardFace = intent.getParcelableExtra(EXTRA_DETECTED_FACE);
             Uri cardImageUri = intent.getParcelableExtra(EXTRA_CARD_IMAGE_URI);
             if (cardImageUri != null) {
-                ImageView imageView = findViewById(R.id.cardImageView);
-                imageView.setOnClickListener(view -> showCardDetails());
+                viewBinding.cardImageView.setOnClickListener(view -> showCardDetails());
                 addDisposable(Single.create(emitter -> {
                     try {
                         Bitmap bitmap = BitmapFactory.decodeFile(cardImageUri.getPath());
@@ -56,7 +63,7 @@ public class IDCardActivity extends RxVerIDActivity {
                         emitter.onError(e);
                     }
                 }).cast(RoundedBitmapDrawable.class).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
-                        imageView::setImageDrawable,
+                        viewBinding.cardImageView::setImageDrawable,
                         error -> {
 
                         }
@@ -65,7 +72,7 @@ public class IDCardActivity extends RxVerIDActivity {
             documentData = intent.getParcelableExtra(EXTRA_DOCUMENT_DATA);
             invalidateOptionsMenu();
         }
-        findViewById(R.id.button).setOnClickListener(v -> startLivenessDetection());
+        viewBinding.button.setOnClickListener(v -> startLivenessDetection());
     }
 
     @Override
@@ -116,7 +123,6 @@ public class IDCardActivity extends RxVerIDActivity {
 
     private void startLivenessDetection() {
         addDisposable(getRxVerID().getVerID()
-                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         verID -> {
@@ -128,10 +134,29 @@ public class IDCardActivity extends RxVerIDActivity {
                 ));
     }
 
+    private void showError(Throwable error) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.face_comparison_failed)
+                .setMessage(error.getLocalizedMessage())
+                .setPositiveButton(android.R.string.ok, null)
+                .create()
+                .show();
+    }
+
     private void showResult(DetectedFace detectedFace) {
-        Intent intent = new Intent(this, ResultActivity.class);
-        intent.putExtra(ResultActivity.EXTRA_DETECTED_FACE1, cardFace);
-        intent.putExtra(ResultActivity.EXTRA_DETECTED_FACE2, detectedFace);
-        startActivity(intent);
+        addDisposable(getRxVerID().compareFaceToFaces((RecognizableFace)detectedFace.getFace(), new RecognizableFace[]{(RecognizableFace)cardFace.getFace()}).flatMap(score -> Observable.just(detectedFace, cardFace).flatMap(capture -> getRxVerID().cropImageToFace(capture.getImageUri(), capture.getFace()).map(bitmap -> {
+            File tempFile = File.createTempFile("verid_",".jpg");
+            try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream);
+                return Uri.fromFile(tempFile);
+            }
+        }).toObservable()).toList(2).map(list -> new Pair<>(new Pair<>(list.get(0), list.get(1)),score))).compose(SchedulersTransformer.defaultInstance()).subscribe(result -> {
+            Intent intent = new Intent(this, ResultActivity.class);
+            intent.putExtra(ResultActivity.EXTRA_SCORE, result.second);
+            //noinspection ConstantConditions
+            intent.putExtra(ResultActivity.EXTRA_FACE1_IMAGE_URI, result.first.first);
+            intent.putExtra(ResultActivity.EXTRA_FACE2_IMAGE_URI, result.first.second);
+            startActivity(intent);
+        }, this::showError));
     }
 }

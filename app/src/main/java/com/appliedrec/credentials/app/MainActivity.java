@@ -6,15 +6,14 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.constraintlayout.widget.Group;
 import androidx.core.util.Pair;
 
-import com.appliedrec.uielements.RxVerIDActivity;
+import com.appliedrec.credentials.app.databinding.ActivityMainBinding;
+import com.appliedrec.rxverid.RxVerIDActivity;
 import com.appliedrec.verid.core.Bearing;
 import com.appliedrec.verid.core.DetectedFace;
 import com.microblink.entities.recognizers.Recognizer;
@@ -37,19 +36,17 @@ public class MainActivity extends RxVerIDActivity {
     private static final int REQUEST_CODE_SCAN_ID_CARD = 1;
     private static final int REQUEST_CODE_SHOW_SUPPORTED_DOCUMENTS = 2;
     private RecognizerBundle recognizerBundle;
-    private ProgressBar progressBar;
-    private Group mainUIGroup;
     private DocumentData documentData;
+    private ActivityMainBinding viewBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        findViewById(R.id.button).setOnClickListener(v -> scanIDCard());
-        progressBar = findViewById(R.id.progressBar);
-        mainUIGroup = findViewById(R.id.mainUI);
-        progressBar.setVisibility(View.VISIBLE);
-        mainUIGroup.setVisibility(View.INVISIBLE);
+        viewBinding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(viewBinding.getRoot());
+        viewBinding.button.setOnClickListener(v -> scanIDCard());
+        viewBinding.progressBar.setVisibility(View.VISIBLE);
+        viewBinding.mainUI.setVisibility(View.INVISIBLE);
         BlinkLicenceKeyUpdater licenceKeyUpdater = new BlinkLicenceKeyUpdater(this);
         addDisposable(licenceKeyUpdater
                 .getSavedLicenceKey()
@@ -63,11 +60,11 @@ public class MainActivity extends RxVerIDActivity {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         () -> {
-                            progressBar.setVisibility(View.GONE);
-                            mainUIGroup.setVisibility(View.VISIBLE);
+                            viewBinding.progressBar.setVisibility(View.GONE);
+                            viewBinding.mainUI.setVisibility(View.VISIBLE);
                         },
                         error -> {
-                            progressBar.setVisibility(View.GONE);
+                            viewBinding.progressBar.setVisibility(View.GONE);
                             new AlertDialog.Builder(this)
                                     .setTitle(R.string.invalid_mb_key)
                                     .setPositiveButton(android.R.string.ok, (dialogInterface, i) -> finish())
@@ -76,6 +73,12 @@ public class MainActivity extends RxVerIDActivity {
                                     .show();
                         }
                 ));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        viewBinding = null;
     }
 
     @Override
@@ -104,7 +107,7 @@ public class MainActivity extends RxVerIDActivity {
         byte[] frontImage = result.getEncodedFrontFullDocumentImage();
         byte[] faceImage = result.getEncodedFaceImage();
         documentData = new DocumentData(result);
-        addDisposable(Single.create(single -> {
+        addDisposable(Single.<Uri[]>create(single -> {
             try {
                 if (frontImage.length == 0) {
                     throw new Exception(getString(R.string.failed_to_collect_card_image));
@@ -137,7 +140,7 @@ public class MainActivity extends RxVerIDActivity {
             } catch (Exception e) {
                 single.onError(new Exception(getString(R.string.failed_to_save_image_of_card), e));
             }
-        }).cast(Uri[].class)
+        })
                 .flatMapObservable(imageUri -> getRxVerID().detectRecognizableFacesInImage(imageUri[1], 1).switchIfEmpty(getRxVerID().detectRecognizableFacesInImage(imageUri[0], 1)).map(face -> new Pair<>(new DetectedFace(face, Bearing.STRAIGHT, imageUri[1]), imageUri[0])))
                 .singleOrError()
                 .subscribeOn(Schedulers.io())
@@ -152,8 +155,8 @@ public class MainActivity extends RxVerIDActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_SCAN_ID_CARD && resultCode == RESULT_OK && data != null) {
-            progressBar.setVisibility(View.VISIBLE);
-            mainUIGroup.setVisibility(View.INVISIBLE);
+            viewBinding.progressBar.setVisibility(View.VISIBLE);
+            viewBinding.mainUI.setVisibility(View.INVISIBLE);
             recognizerBundle.loadFromIntent(data);
             Recognizer firstRecognizer = recognizerBundle.getRecognizers()[0];
             documentData = null;
@@ -195,8 +198,8 @@ public class MainActivity extends RxVerIDActivity {
     }
 
     private void showError(Throwable error) {
-        progressBar.setVisibility(View.GONE);
-        mainUIGroup.setVisibility(View.VISIBLE);
+        viewBinding.progressBar.setVisibility(View.GONE);
+        viewBinding.mainUI.setVisibility(View.VISIBLE);
         String message = error.getLocalizedMessage();
         if (error.getCause() != null && error.getCause().getLocalizedMessage() != null && !error.getCause().getLocalizedMessage().isEmpty()) {
             message += ": "+error.getCause().getLocalizedMessage();
@@ -210,8 +213,8 @@ public class MainActivity extends RxVerIDActivity {
     }
 
     private void showCard(DetectedFace face, Uri cardImageUri) {
-        progressBar.setVisibility(View.GONE);
-        mainUIGroup.setVisibility(View.VISIBLE);
+        viewBinding.progressBar.setVisibility(View.GONE);
+        viewBinding.mainUI.setVisibility(View.VISIBLE);
         Intent intent = new Intent(this, IDCardActivity.class);
         intent.putExtra(IDCardActivity.EXTRA_CARD_IMAGE_URI, cardImageUri);
         intent.putExtra(IDCardActivity.EXTRA_DETECTED_FACE, face);
