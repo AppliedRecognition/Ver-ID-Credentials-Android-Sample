@@ -15,6 +15,9 @@ android {
         buildConfigField "String", "BLINK_SUPPORTED_DOCUMENTS_URL", "\"https://github.com/BlinkID/blinkid-android/blob/master/documentation/BlinkIDRecognizer.md\""
         buildConfigField "String", "INTELLICHECK_URL", "\"https://dev.ver-id.com/id-check/parse-verify\""
         manifestPlaceholders = ["veridPassword": "8f821baf-4ae4-41cd-a175-91d7ef6a6db8"]
+        viewBinding {
+            enabled = true
+        }
     }
     buildTypes {
         release {
@@ -34,8 +37,9 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$rootProject.appcompatVersion"
     implementation "com.appliedrec.verid:rx:$rootProject.rxveridVersion"
     implementation "com.appliedrec.verid:ui:$rootProject.veridVersion"
-    implementation "com.appliedrec.verid:ui-elements:$rootProject.veriduielementsVersion"
-    implementation 'com.google.firebase:firebase-analytics:17.2.2'
+    implementation "com.appliedrec.verid:identity:$rootProject.veridIdentityVersion"
+    implementation "com.appliedrec.verid:ui-elements:$rootProject.uiElementsVersion"
+    implementation 'com.google.firebase:firebase-analytics:17.2.3'
     implementation 'com.google.firebase:firebase-crashlytics:17.0.0-beta01'
     implementation("com.microblink:blinkid:$rootProject.blinkidVersion@aar") {
         transitive = true
@@ -43,4 +47,5 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.security:security-crypto:1.0.0-alpha02'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 }

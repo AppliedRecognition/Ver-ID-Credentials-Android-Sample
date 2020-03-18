@@ -7,7 +7,7 @@ buildscript {
         
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
+        classpath 'com.android.tools.build:gradle:3.6.1'
         classpath 'com.google.gms:google-services:4.3.3'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.0.0-beta02'
         // NOTE: Do not place your application dependencies here; they belong
@@ -17,10 +17,11 @@ buildscript {
 
 ext {
     appcompatVersion = '[1.1.0,2.0.0['
-    veridVersion = '[1.16.0,2.0.0['
-    rxveridVersion = '[1.6,2.0['
+    veridVersion = '[1.20.0,2.0.0['
+    rxveridVersion = '[1.10,2.0['
     blinkidVersion = '[5.0.0,6.0.0['
-    veriduielementsVersion = '[1.0.0,2.0.0['
+    veridIdentityVersion = '[1.1.1,2.0.0['
+    uiElementsVersion = '[2.0,3.0['
     versionMajor = 7
     versionMinor = 5
     versionPatch = 1
