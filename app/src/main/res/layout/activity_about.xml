@@ -6,9 +6,10 @@
     tools:context=".AboutActivity">
 
     <TextView
+        android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/about_text"
         android:padding="16dp"
+        android:text="@string/about_text"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 </ScrollView>
