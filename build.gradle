@@ -19,12 +19,12 @@ ext {
     appcompatVersion = '[1.2.0,2.0.0['
     veridVersion = '[1.20.0,2.0.0['
     rxveridVersion = '[1.10,2.0['
-    blinkidVersion = '5.6.0'
+    blinkidVersion = '5.8.0'
     veridIdentityVersion = '[1.1.1,2.0.0['
     uiElementsVersion = '[2.0,3.0['
     versionMajor = 7
     versionMinor = 5
-    versionPatch = 3
+    versionPatch = 4
     versionClassifier = null
     versionClassifierVersion = ""
     minSdkVersion = 23

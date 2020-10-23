@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
 
 import com.microblink.MicroblinkSDK;
-import com.microblink.recognition.InvalidLicenceKeyException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -89,7 +88,7 @@ class BlinkLicenceKeyUpdater {
                 SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
                 preferences.edit().putString(BLINK_LICENCE_PREF_KEY, licenceKey).apply();
                 emitter.onComplete();
-            } catch (InvalidLicenceKeyException e) {
+            } catch (Exception e) {
                 emitter.onError(e);
             }
         }).subscribeOn(AndroidSchedulers.mainThread());
