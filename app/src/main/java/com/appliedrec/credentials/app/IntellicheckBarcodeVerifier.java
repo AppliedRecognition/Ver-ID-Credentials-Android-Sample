@@ -23,9 +23,9 @@ import java.util.UUID;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 class IntellicheckBarcodeVerifier {
 
@@ -50,6 +50,14 @@ class IntellicheckBarcodeVerifier {
         return deviceId;
     }
 
+    private String getDeviceName() {
+        return Build.MODEL;
+    }
+
+    private String getDeviceOs() {
+        return "Android "+Build.VERSION.RELEASE;
+    }
+
     public Completable testPassword() {
         return Completable.create(emitter -> {
             try {
@@ -58,7 +66,7 @@ class IntellicheckBarcodeVerifier {
                 Uri.Builder builder = new Uri.Builder()
                         .scheme(uri.getScheme())
                         .authority(uri.getAuthority());
-                for (int i=0; i<pathSegments.size()-1; i++) {
+                for (int i=0; i<pathSegments.size(); i++) {
                     builder.appendPath(pathSegments.get(i));
                 }
                 builder.appendPath("check-password");
@@ -70,6 +78,8 @@ class IntellicheckBarcodeVerifier {
                 connection.setDoInput(true);
                 byte[] body = Objects.requireNonNull(new Uri.Builder()
                         .appendQueryParameter("device_id", getDeviceId())
+                        .appendQueryParameter("device_os", getDeviceOs())
+                        .appendQueryParameter("device_name", getDeviceName())
                         .appendQueryParameter("app_id", appId)
                         .appendQueryParameter("password", password).build().getQuery()).getBytes(StandardCharsets.UTF_8);
                 OutputStream outputStream = connection.getOutputStream();
@@ -111,9 +121,9 @@ class IntellicheckBarcodeVerifier {
                 connection.setDoInput(true);
                 connection.setDoOutput(true);
                 String body = new Uri.Builder()
-                        .appendQueryParameter("device_os", "Android")
+                        .appendQueryParameter("device_os", getDeviceOs())
                         .appendQueryParameter("device_id", getDeviceId())
-                        .appendQueryParameter("device_name", Build.MODEL)
+                        .appendQueryParameter("device_name", getDeviceName())
                         .appendQueryParameter("password", password)
                         .appendQueryParameter("app_id", appId)
                         .appendQueryParameter("data", Base64.encodeToString(barcodeData, Base64.NO_WRAP))
@@ -139,26 +149,20 @@ class IntellicheckBarcodeVerifier {
                 jsonReader.setLenient(true);
                 jsonReader.beginObject();
                 while (jsonReader.hasNext()) {
-                    if ("document_t".equals(jsonReader.nextName())) {
-                        jsonReader.beginObject();
-                        while (jsonReader.hasNext()) {
-                            String name = jsonReader.nextName();
-                            if ("$".equals(name) || name == null || name.isEmpty()) {
-                                jsonReader.skipValue();
-                            } else if ("testCard".equals(name)) {
-                                emitter.onNext(new Pair<>(name, jsonReader.nextBoolean() ? "Yes" : "No"));
-                            } else {
-                                try {
-                                    String value = jsonReader.nextString();
-                                    if (value != null && !value.trim().isEmpty()) {
-                                        emitter.onNext(new Pair<>(name, value));
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                    String name = jsonReader.nextName();
+                    if (name == null || name.isEmpty()) {
+                        jsonReader.skipValue();
+                    } else if ("testCard".equals(name)) {
+                        emitter.onNext(new Pair<>(name, jsonReader.nextBoolean() ? "Yes" : "No"));
+                    } else {
+                        try {
+                            String value = jsonReader.nextString();
+                            if (value != null && !value.trim().isEmpty()) {
+                                emitter.onNext(new Pair<>(name, value));
                             }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        jsonReader.endObject();
                     }
                 }
                 jsonReader.endObject();

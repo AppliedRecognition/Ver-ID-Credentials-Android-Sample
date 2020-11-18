@@ -6,12 +6,13 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.appliedrec.credentials.app.databinding.ActivitySettingsBinding;
-import com.appliedrec.rxverid.RxVerIDActivity;
 
-import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 
-public class SettingsActivity extends RxVerIDActivity {
+public class SettingsActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

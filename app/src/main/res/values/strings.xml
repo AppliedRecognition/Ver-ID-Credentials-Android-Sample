@@ -15,7 +15,6 @@
     <string name="face_comparison_failed">Face comparison failed</string>
     <string name="details">Details</string>
     <string name="false_acceptance_rates">False acceptance rates</string>
-    <string name="far_explanation">There is a <xliff:g example="0.003" id="probability">%1$.5f</xliff:g> %% chance that the person on the card is not the person in the selfie.</string>
     <string name="card_face">Card face</string>
     <string name="live_face">Live face</string>
     <string name="failed_to_verify_barcode">Failed to verify barcode</string>
@@ -39,4 +38,6 @@
     <string name="date_of_issue">Date of issue</string>
     <string name="date_of_expiry">Date of expiry</string>
     <string name="document_number">Document number</string>
+    <string name="far_explanation">Across an average population distribution, the score shown translates to a likelihood of <xliff:g example="0.003" id="probability">%1$.5f</xliff:g>%% that the two images show the same person.</string>
+    <string name="face_comparison_result">Face comparison result</string>
 </resources>

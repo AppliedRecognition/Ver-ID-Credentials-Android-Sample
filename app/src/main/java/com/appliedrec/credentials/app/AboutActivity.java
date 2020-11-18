@@ -6,7 +6,7 @@ import android.view.Menu;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.appliedrec.verid.core.VerID;
+import com.appliedrec.verid.core2.VerID;
 
 public class AboutActivity extends AppCompatActivity {
 
@@ -24,7 +24,7 @@ public class AboutActivity extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        String veridVersion = "Ver-ID SDK version: "+VerID.getVersion();
+        String veridVersion = "Ver-ID SDK version: " + VerID.getVersion();
         menu.add(veridVersion);
         return true;
     }

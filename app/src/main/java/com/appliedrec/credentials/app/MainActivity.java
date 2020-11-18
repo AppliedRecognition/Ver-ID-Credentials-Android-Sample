@@ -1,7 +1,8 @@
 package com.appliedrec.credentials.app;
 
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -10,12 +11,14 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.util.Pair;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.appliedrec.credentials.app.databinding.ActivityMainBinding;
-import com.appliedrec.rxverid.RxVerIDActivity;
-import com.appliedrec.verid.core.Bearing;
-import com.appliedrec.verid.core.DetectedFace;
+import com.appliedrec.verid.core2.Bearing;
+import com.appliedrec.verid.core2.Face;
+import com.appliedrec.verid.core2.RecognizableFace;
+import com.appliedrec.verid.core2.VerIDImageBitmap;
+import com.appliedrec.verid.core2.session.FaceCapture;
 import com.microblink.entities.recognizers.Recognizer;
 import com.microblink.entities.recognizers.RecognizerBundle;
 import com.microblink.entities.recognizers.blinkid.DataMatchResult;
@@ -23,20 +26,14 @@ import com.microblink.entities.recognizers.blinkid.generic.BlinkIdCombinedRecogn
 import com.microblink.uisettings.ActivityRunner;
 import com.microblink.uisettings.BlinkIdUISettings;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
-
-public class MainActivity extends RxVerIDActivity {
+public class MainActivity extends BaseActivity {
 
     private static final int REQUEST_CODE_SCAN_ID_CARD = 1;
-    private static final int REQUEST_CODE_SHOW_SUPPORTED_DOCUMENTS = 2;
     private RecognizerBundle recognizerBundle;
-    private DocumentData documentData;
     private ActivityMainBinding viewBinding;
 
     @Override
@@ -47,6 +44,16 @@ public class MainActivity extends RxVerIDActivity {
         viewBinding.button.setOnClickListener(v -> scanIDCard());
         viewBinding.progressBar.setVisibility(View.VISIBLE);
         viewBinding.mainUI.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        viewBinding = null;
+    }
+
+    @Override
+    public void onVerIDPropertiesAvailable() {
         BlinkLicenceKeyUpdater licenceKeyUpdater = new BlinkLicenceKeyUpdater(this);
         addDisposable(licenceKeyUpdater
                 .getSavedLicenceKey()
@@ -76,12 +83,6 @@ public class MainActivity extends RxVerIDActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        viewBinding = null;
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
@@ -105,50 +106,34 @@ public class MainActivity extends RxVerIDActivity {
 
     private void showCardFromResult(BlinkIdCombinedRecognizer.Result result) {
         byte[] frontImage = result.getEncodedFrontFullDocumentImage();
-        byte[] faceImage = result.getEncodedFaceImage();
-        documentData = new DocumentData(result);
-        addDisposable(Single.<Uri[]>create(single -> {
+        Single<FaceCapture> single = Single.<Bitmap>create(emitter -> {
             try {
                 if (frontImage.length == 0) {
                     throw new Exception(getString(R.string.failed_to_collect_card_image));
                 }
-                if (faceImage.length == 0) {
+                Bitmap frontImageBitmap = BitmapFactory.decodeByteArray(frontImage, 0, frontImage.length);
+                emitter.onSuccess(frontImageBitmap);
+            } catch (Exception e) {
+                emitter.onError(e);
+            }
+        }).flatMap(bitmap -> emitter -> {
+            try {
+                VerIDImageBitmap image = new VerIDImageBitmap(bitmap, ExifInterface.ORIENTATION_NORMAL);
+                Face[] faces = getVerID().getFaceDetection().detectFacesInImage(image.createFaceDetectionImage(), 1, 0);
+                if (faces.length > 0) {
+                    RecognizableFace[] recognizableFaces = getVerID().getFaceRecognition().createRecognizableFacesFromFaces(faces, image);
+                    emitter.onSuccess(new FaceCapture(recognizableFaces[0], Bearing.STRAIGHT, bitmap));
+                } else {
                     throw new Exception(getString(R.string.failed_to_detect_face_in_card));
                 }
-                File imageFile = new File(getFilesDir(), "cardFront.jpg");
-                FileOutputStream outputStream = new FileOutputStream(imageFile);
-                ByteArrayInputStream inputStream = new ByteArrayInputStream(frontImage);
-                int read;
-                byte[] buffer = new byte[512];
-                while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
-                    outputStream.write(buffer, 0, read);
-                }
-                outputStream.close();
-                inputStream.close();
-                Uri[] uris = new Uri[2];
-                uris[0] = Uri.fromFile(imageFile);
-                imageFile = File.createTempFile("verid_card_face_", ".jpg");
-                outputStream = new FileOutputStream(imageFile);
-                inputStream = new ByteArrayInputStream(faceImage);
-                while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
-                    outputStream.write(buffer, 0, read);
-                }
-                outputStream.close();
-                inputStream.close();
-                uris[1] = Uri.fromFile(imageFile);
-                single.onSuccess(uris);
             } catch (Exception e) {
-                single.onError(new Exception(getString(R.string.failed_to_save_image_of_card), e));
+                emitter.onError(e);
             }
-        })
-                .flatMapObservable(imageUri -> getRxVerID().detectRecognizableFacesInImage(imageUri[1], 1).switchIfEmpty(getRxVerID().detectRecognizableFacesInImage(imageUri[0], 1)).map(face -> new Pair<>(new DetectedFace(face, Bearing.STRAIGHT, imageUri[1]), imageUri[0])))
-                .singleOrError()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        pair -> showCard(pair.first, pair.second),
-                        error -> showError(new Exception(getString(R.string.failed_to_detect_face_in_card), error))
-                ));
+        });
+        addDisposable(single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
+                faceCapture -> showCard(faceCapture, new DocumentData(result)),
+                this::showError
+        ));
     }
 
     @Override
@@ -159,7 +144,6 @@ public class MainActivity extends RxVerIDActivity {
             viewBinding.mainUI.setVisibility(View.INVISIBLE);
             recognizerBundle.loadFromIntent(data);
             Recognizer firstRecognizer = recognizerBundle.getRecognizers()[0];
-            documentData = null;
             if (firstRecognizer instanceof BlinkIdCombinedRecognizer) {
                 BlinkIdCombinedRecognizer.Result result = ((BlinkIdCombinedRecognizer)firstRecognizer).getResult();
                 if (result.getDocumentDataMatch() == DataMatchResult.Failed) {
@@ -174,15 +158,13 @@ public class MainActivity extends RxVerIDActivity {
                     showCardFromResult(result);
                 }
             }
-        } else if (requestCode == REQUEST_CODE_SHOW_SUPPORTED_DOCUMENTS) {
-            scanIDCard();
         }
     }
 
     private void showSupportedDocuments() {
         Intent intent = new Intent(this, WebViewActivity.class);
         intent.putExtra(Intent.EXTRA_TEXT, BuildConfig.BLINK_SUPPORTED_DOCUMENTS_URL);
-        startActivityForResult(intent, REQUEST_CODE_SHOW_SUPPORTED_DOCUMENTS);
+        startActivity(intent);
     }
 
     private void scanIDCard() {
@@ -212,16 +194,22 @@ public class MainActivity extends RxVerIDActivity {
                 .show();
     }
 
-    private void showCard(DetectedFace face, Uri cardImageUri) {
+    private void showCard(FaceCapture faceCapture, DocumentData documentData) {
         viewBinding.progressBar.setVisibility(View.GONE);
         viewBinding.mainUI.setVisibility(View.VISIBLE);
-        Intent intent = new Intent(this, IDCardActivity.class);
-        intent.putExtra(IDCardActivity.EXTRA_CARD_IMAGE_URI, cardImageUri);
-        intent.putExtra(IDCardActivity.EXTRA_DETECTED_FACE, face);
-        if (documentData != null) {
-            intent.putExtra(IDCardActivity.EXTRA_DOCUMENT_DATA, documentData);
+        try {
+            getSharedData().setSharedObject(IDCardActivity.EXTRA_FACE_CAPTURE, faceCapture);
+            getSharedData().setSharedObject(IDCardActivity.EXTRA_DOCUMENT_DATA, documentData);
+            Intent intent = new Intent(this, IDCardActivity.class);
+            startActivity(intent);
+        } catch (Exception e) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.error)
+                    .setMessage("Failed to save captured ID card")
+                    .setPositiveButton(android.R.string.ok, null)
+                    .create()
+                    .show();
         }
-        startActivity(intent);
     }
 
     private void showAbout() {

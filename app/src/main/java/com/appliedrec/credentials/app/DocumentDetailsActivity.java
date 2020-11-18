@@ -14,14 +14,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.appliedrec.credentials.app.databinding.ActivityDocumentDetailsBinding;
 import com.appliedrec.credentials.app.databinding.ListItemDocPropertyBinding;
-import com.appliedrec.rxverid.RxVerIDActivity;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 
-public class DocumentDetailsActivity extends RxVerIDActivity {
+public class DocumentDetailsActivity extends BaseActivity {
 
     static class DocumentPropertyViewHolder extends RecyclerView.ViewHolder {
 

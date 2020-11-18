@@ -3,8 +3,13 @@ package com.appliedrec.credentials.app;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.appliedrec.verid.core2.serialization.CborAdapter;
 import com.microblink.entities.recognizers.blinkid.generic.BlinkIdCombinedRecognizer;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+@CborAdapter(DocumentDataCborAdapter.class)
 public class DocumentData implements Parcelable {
 
     private final String firstName;
@@ -26,6 +31,19 @@ public class DocumentData implements Parcelable {
         dateOfIssue = result.getDateOfIssue().getOriginalDateString();
         documentNumber = result.getDocumentNumber();
         sex = result.getSex();
+        rawBarcode = new String(result.getBarcodeResult().getRawData(), StandardCharsets.UTF_8);
+    }
+
+    DocumentData(String firstName, String lastName, String address, String dateOfBirth, String dateOfExpiry, String dateOfIssue, String documentNumber, String sex, String rawBarcode) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.address = address;
+        this.dateOfBirth = dateOfBirth;
+        this.dateOfExpiry = dateOfExpiry;
+        this.dateOfIssue = dateOfIssue;
+        this.documentNumber = documentNumber;
+        this.sex = sex;
+        this.rawBarcode = rawBarcode;
     }
 
     private DocumentData(Parcel in) {

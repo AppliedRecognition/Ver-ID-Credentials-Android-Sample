@@ -2,77 +2,70 @@ package com.appliedrec.credentials.app;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
-import androidx.core.util.Pair;
 
 import com.appliedrec.credentials.app.databinding.ActivityIdcardBinding;
-import com.appliedrec.rxverid.RxVerIDActivity;
-import com.appliedrec.rxverid.SchedulersTransformer;
-import com.appliedrec.uielements.facecomparison.ResultActivity;
-import com.appliedrec.verid.core.Bearing;
-import com.appliedrec.verid.core.DetectedFace;
-import com.appliedrec.verid.core.LivenessDetectionSessionSettings;
-import com.appliedrec.verid.core.RecognizableFace;
-import com.appliedrec.verid.ui.VerIDSessionIntent;
+import com.appliedrec.verid.core2.Bearing;
+import com.appliedrec.verid.core2.IRecognizable;
+import com.appliedrec.verid.core2.session.FaceCapture;
+import com.appliedrec.verid.core2.session.LivenessDetectionSessionSettings;
+import com.appliedrec.verid.core2.session.VerIDSessionResult;
+import com.appliedrec.verid.ui2.AbstractVerIDSession;
+import com.appliedrec.verid.ui2.VerIDSession;
+import com.appliedrec.verid.ui2.VerIDSessionDelegate;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
+public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate {
 
-public class IDCardActivity extends RxVerIDActivity {
-
-    public static final String EXTRA_DETECTED_FACE = "com.appliedrec.verid.EXTRA_DETECTED_FACE";
+    public static final String EXTRA_FACE_CAPTURE = "com.appliedrec.verid.EXTRA_DETECTED_FACE";
     public static final String EXTRA_DOCUMENT_DATA = "com.appliedrec.verid.EXTRA_DOCUMENT_DATA";
-    public static final String EXTRA_CARD_IMAGE_URI = "com.appliedrec.verid.EXTRA_CARD_IMAGE_URI";
-    private static final int REQUEST_CODE_LIVE_FACE = 1;
-    private DetectedFace cardFace;
+    private FaceCapture cardFaceCapture;
     private DocumentData documentData;
+    private ActivityIdcardBinding viewBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActivityIdcardBinding viewBinding = ActivityIdcardBinding.inflate(getLayoutInflater());
+        viewBinding = ActivityIdcardBinding.inflate(getLayoutInflater());
         setContentView(viewBinding.getRoot());
-        Intent intent = getIntent();
-        if (intent != null) {
-            cardFace = intent.getParcelableExtra(EXTRA_DETECTED_FACE);
-            Uri cardImageUri = intent.getParcelableExtra(EXTRA_CARD_IMAGE_URI);
-            if (cardImageUri != null) {
-                viewBinding.cardImageView.setOnClickListener(view -> showCardDetails());
-                addDisposable(Single.create(emitter -> {
-                    try {
-                        Bitmap bitmap = BitmapFactory.decodeFile(cardImageUri.getPath());
-                        RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
-                        drawable.setCornerRadius((float)bitmap.getHeight()/16f);
-                        emitter.onSuccess(drawable);
-                    } catch (Exception e) {
-                        emitter.onError(e);
-                    }
-                }).cast(RoundedBitmapDrawable.class).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
-                        viewBinding.cardImageView::setImageDrawable,
-                        error -> {
+    }
 
-                        }
-                ));
+    @Override
+    public void onVerIDPropertiesAvailable() {
+        try {
+            cardFaceCapture = getSharedData().getSharedObject(EXTRA_FACE_CAPTURE, FaceCapture.class);
+            if (cardFaceCapture != null) {
+                viewBinding.cardImageView.setOnClickListener(view -> showCardDetails());
+                RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(getResources(), cardFaceCapture.getImage());
+                drawable.setCornerRadius((float) cardFaceCapture.getImage().getHeight() / 16f);
+                viewBinding.cardImageView.setImageDrawable(drawable);
             }
-            documentData = intent.getParcelableExtra(EXTRA_DOCUMENT_DATA);
+            documentData = getSharedData().getSharedObject(EXTRA_DOCUMENT_DATA, DocumentData.class);
             invalidateOptionsMenu();
+            viewBinding.button.setOnClickListener(v -> startLivenessDetection());
+        } catch (Exception e) {
+
         }
-        viewBinding.button.setOnClickListener(v -> startLivenessDetection());
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isFinishing()) {
+            try {
+                getSharedData().setSharedObject(EXTRA_FACE_CAPTURE, null);
+                getSharedData().setSharedObject(EXTRA_DOCUMENT_DATA, null);
+            } catch (Exception ignore) {
+            }
+        }
     }
 
     @Override
@@ -83,7 +76,7 @@ public class IDCardActivity extends RxVerIDActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        menu.findItem(R.id.action_details).setVisible(documentData != null && cardFace != null && cardFace.getImageUri() != null);
+        menu.findItem(R.id.action_details).setVisible(documentData != null && cardFaceCapture != null);
         return true;
     }
 
@@ -96,25 +89,6 @@ public class IDCardActivity extends RxVerIDActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_LIVE_FACE && resultCode == RESULT_OK) {
-            addDisposable(getRxVerID().getSessionResultFromIntent(data)
-                    .flatMapObservable(result -> getRxVerID().getFacesAndImageUrisFromSessionResult(result, Bearing.STRAIGHT))
-                    .filter(detectedFace -> detectedFace.getFace() instanceof RecognizableFace)
-                    .firstOrError()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                            this::showResult,
-                            error -> {
-
-                            }
-                    ));
-        }
-    }
-
     private void showCardDetails() {
         Intent intent = new Intent(this, DocumentDetailsActivity.class);
         intent.putExtra(EXTRA_DOCUMENT_DATA, documentData);
@@ -122,16 +96,14 @@ public class IDCardActivity extends RxVerIDActivity {
     }
 
     private void startLivenessDetection() {
-        addDisposable(getRxVerID().getVerID()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        verID -> {
-                            LivenessDetectionSessionSettings settings = new LivenessDetectionSessionSettings();
-                            Intent intent = new VerIDSessionIntent<>(this, verID, settings);
-
-                            startActivityForResult(intent, REQUEST_CODE_LIVE_FACE);
-                        }
-                ));
+        try {
+            LivenessDetectionSessionSettings sessionSettings = new LivenessDetectionSessionSettings();
+            VerIDSession<LivenessDetectionSessionSettings> session = new VerIDSession<>(getVerID(), sessionSettings);
+            session.setDelegate(this);
+            session.start();
+        } catch (Exception e) {
+            showError(e);
+        }
     }
 
     private void showError(Throwable error) {
@@ -143,20 +115,27 @@ public class IDCardActivity extends RxVerIDActivity {
                 .show();
     }
 
-    private void showResult(DetectedFace detectedFace) {
-        addDisposable(getRxVerID().compareFaceToFaces((RecognizableFace)detectedFace.getFace(), new RecognizableFace[]{(RecognizableFace)cardFace.getFace()}).flatMap(score -> Observable.just(detectedFace, cardFace).flatMap(capture -> getRxVerID().cropImageToFace(capture.getImageUri(), capture.getFace()).map(bitmap -> {
-            File tempFile = File.createTempFile("verid_",".jpg");
-            try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream);
-                return Uri.fromFile(tempFile);
+    private void showResult(FaceCapture detectedFace) {
+        try {
+            float score = getVerID().getFaceRecognition().compareSubjectFacesToFaces(new IRecognizable[]{detectedFace.getFace()}, new IRecognizable[]{cardFaceCapture.getFace()});
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                cardFaceCapture.getFaceImage().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                getSharedData().setSharedData(ResultActivity.EXTRA_CARD_FACE_CAPTURE, outputStream.toByteArray());
             }
-        }).toObservable()).toList(2).map(list -> new Pair<>(new Pair<>(list.get(0), list.get(1)),score))).compose(SchedulersTransformer.defaultInstance()).subscribe(result -> {
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                detectedFace.getFaceImage().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                getSharedData().setSharedData(ResultActivity.EXTRA_LIVE_FACE_CAPTURE, outputStream.toByteArray());
+            }
             Intent intent = new Intent(this, ResultActivity.class);
-            intent.putExtra(ResultActivity.EXTRA_SCORE, result.second);
-            //noinspection ConstantConditions
-            intent.putExtra(ResultActivity.EXTRA_FACE1_IMAGE_URI, result.first.first);
-            intent.putExtra(ResultActivity.EXTRA_FACE2_IMAGE_URI, result.first.second);
+            intent.putExtra(ResultActivity.EXTRA_SCORE, score);
             startActivity(intent);
-        }, this::showError));
+        } catch (Exception e) {
+            showError(e);
+        }
+    }
+
+    @Override
+    public void onSessionFinished(AbstractVerIDSession<?, ?, ?> abstractVerIDSession, VerIDSessionResult verIDSessionResult) {
+        verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(this::showResult);
     }
 }

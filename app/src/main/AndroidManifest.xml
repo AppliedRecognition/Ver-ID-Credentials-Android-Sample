@@ -8,11 +8,19 @@
 
     <application
         android:name=".CredentialsApplication"
-        android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        <activity android:name=".ResultActivity" />
+        <activity android:name=".LoadingActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity android:name=".SettingsActivity" />
         <activity
             android:name=".DocumentDetailsActivity"
@@ -28,13 +36,7 @@
             android:label="@string/your_id_card" />
         <activity
             android:name=".MainActivity"
-            android:label="@string/id_capture">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:label="@string/id_capture" />
 
         <meta-data
             android:name="com.appliedrec.verid.password"
