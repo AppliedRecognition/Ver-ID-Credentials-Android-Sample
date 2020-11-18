@@ -16,6 +16,7 @@ android {
         buildConfigField "String", "INTELLICHECK_URL", "\"https://dev.ver-id.com/id-check/\""
         manifestPlaceholders = ["veridPassword": "8f821baf-4ae4-41cd-a175-91d7ef6a6db8"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -48,6 +49,7 @@ dependencies {
     }
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.security:security-crypto:1.1.0-alpha02'
+    implementation 'com.android.support:multidex:1.0.3'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-intents:3.3.0'

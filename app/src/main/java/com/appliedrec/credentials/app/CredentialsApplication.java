@@ -2,17 +2,15 @@ package com.appliedrec.credentials.app;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
+import androidx.multidex.MultiDexApplication;
 import androidx.test.espresso.IdlingResource;
 
 import com.appliedrec.verid.core2.VerID;
-import com.appliedrec.verid.core2.VerIDFactory;
-import com.appliedrec.verid.core2.VerIDFactoryDelegate;
 import com.appliedrec.verid.core2.serialization.Cbor;
 import com.microblink.MicroblinkSDK;
 import com.microblink.intent.IntentDataTransferMode;
@@ -22,7 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Set;
 
-public class CredentialsApplication extends Application implements Application.ActivityLifecycleCallbacks, ISharedData, IdlingResource {
+public class CredentialsApplication extends MultiDexApplication implements Application.ActivityLifecycleCallbacks, ISharedData, IdlingResource {
 
     private VerID verID;
     private final HashMap<String, byte[]> sharedData = new HashMap<>();
