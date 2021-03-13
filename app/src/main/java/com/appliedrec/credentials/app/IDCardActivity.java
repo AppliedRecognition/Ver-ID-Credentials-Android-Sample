@@ -17,7 +17,7 @@ import com.appliedrec.verid.core2.IRecognizable;
 import com.appliedrec.verid.core2.session.FaceCapture;
 import com.appliedrec.verid.core2.session.LivenessDetectionSessionSettings;
 import com.appliedrec.verid.core2.session.VerIDSessionResult;
-import com.appliedrec.verid.ui2.AbstractVerIDSession;
+import com.appliedrec.verid.ui2.IVerIDSession;
 import com.appliedrec.verid.ui2.VerIDSession;
 import com.appliedrec.verid.ui2.VerIDSessionDelegate;
 
@@ -98,7 +98,7 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
     private void startLivenessDetection() {
         try {
             LivenessDetectionSessionSettings sessionSettings = new LivenessDetectionSessionSettings();
-            VerIDSession<LivenessDetectionSessionSettings> session = new VerIDSession<>(getVerID(), sessionSettings);
+            VerIDSession session = new VerIDSession(getVerID(), sessionSettings);
             session.setDelegate(this);
             session.start();
         } catch (Exception e) {
@@ -135,7 +135,7 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
     }
 
     @Override
-    public void onSessionFinished(AbstractVerIDSession<?, ?, ?> abstractVerIDSession, VerIDSessionResult verIDSessionResult) {
+    public void onSessionFinished(IVerIDSession<?> abstractVerIDSession, VerIDSessionResult verIDSessionResult) {
         verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(this::showResult);
     }
 }
