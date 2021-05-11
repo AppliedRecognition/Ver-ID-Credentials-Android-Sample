@@ -38,6 +38,9 @@
     <string name="date_of_issue">Date of issue</string>
     <string name="date_of_expiry">Date of expiry</string>
     <string name="document_number">Document number</string>
-    <string name="far_explanation">Across an average population distribution, the score shown translates to a likelihood of <xliff:g example="0.003" id="probability">%1$.5f</xliff:g>%% that the two images show the same person.</string>
+    <string name="far_explanation">The face matching score (<xliff:g example="4.2" id="score">%1$.01f</xliff:g>) indicates a likelihood of <xliff:g example="0.003" id="probability">%2$.5f</xliff:g>%% that the person on the ID card is the same person as the one in the selfie. We recommend a threshold of <xliff:g example="3.0" id="threshold">%3$.01f</xliff:g> for a positive identification when comparing faces from identity cards.</string>
+    <string name="pass">Pass</string>
+    <string name="warning">Warning</string>
+    <string name="warning_explanation">The face matching score <xliff:g example="2.8" id="score">%1$.01f</xliff:g> indicates that the person on the ID card is likely NOT the same person as the one in the selfie. We recommend a threshold of <xliff:g example="3.0" id="threshold">%2$.01f</xliff:g> for a positive identification when comparing faces from identity cards.</string>
     <string name="face_comparison_result">Face comparison result</string>
 </resources>

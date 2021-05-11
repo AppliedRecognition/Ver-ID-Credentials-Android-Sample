@@ -36,7 +36,7 @@ public class CredentialsApplication extends MultiDexApplication implements Appli
 
     private void setupMicroblink() {
         MicroblinkSDK.setIntentDataTransferMode(IntentDataTransferMode.PERSISTED_OPTIMISED);
-        MicroblinkSDK.setShowTimeLimitedLicenseWarning(false);
+        MicroblinkSDK.setShowTrialLicenseWarning(false);
     }
 
     //region ActivityLifecycleCallbacks

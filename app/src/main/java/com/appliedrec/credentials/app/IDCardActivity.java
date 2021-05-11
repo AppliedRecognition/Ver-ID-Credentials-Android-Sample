@@ -1,7 +1,9 @@
 package com.appliedrec.credentials.app;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,9 +27,9 @@ import java.io.ByteArrayOutputStream;
 
 public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate {
 
-    public static final String EXTRA_FACE_CAPTURE = "com.appliedrec.verid.EXTRA_DETECTED_FACE";
+    public static final String EXTRA_FACE_IMAGE = "com.appliedrec.verid.EXTRA_FACE_IMAGE";
     public static final String EXTRA_DOCUMENT_DATA = "com.appliedrec.verid.EXTRA_DOCUMENT_DATA";
-    private FaceCapture cardFaceCapture;
+    private FaceWithImage faceWithImage;
     private DocumentData documentData;
     private ActivityIdcardBinding viewBinding;
 
@@ -41,11 +43,11 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
     @Override
     public void onVerIDPropertiesAvailable() {
         try {
-            cardFaceCapture = getSharedData().getSharedObject(EXTRA_FACE_CAPTURE, FaceCapture.class);
-            if (cardFaceCapture != null) {
+            faceWithImage = getSharedData().getSharedObject(EXTRA_FACE_IMAGE, FaceWithImage.class);
+            if (faceWithImage != null) {
                 viewBinding.cardImageView.setOnClickListener(view -> showCardDetails());
-                RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(getResources(), cardFaceCapture.getImage());
-                drawable.setCornerRadius((float) cardFaceCapture.getImage().getHeight() / 16f);
+                RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(getResources(), faceWithImage.getBitmap());
+                drawable.setCornerRadius((float) faceWithImage.getBitmap().getHeight() / 16f);
                 viewBinding.cardImageView.setImageDrawable(drawable);
             }
             documentData = getSharedData().getSharedObject(EXTRA_DOCUMENT_DATA, DocumentData.class);
@@ -61,7 +63,7 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
         super.onStop();
         if (isFinishing()) {
             try {
-                getSharedData().setSharedObject(EXTRA_FACE_CAPTURE, null);
+                getSharedData().setSharedObject(EXTRA_FACE_IMAGE, null);
                 getSharedData().setSharedObject(EXTRA_DOCUMENT_DATA, null);
             } catch (Exception ignore) {
             }
@@ -76,7 +78,7 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        menu.findItem(R.id.action_details).setVisible(documentData != null && cardFaceCapture != null);
+        menu.findItem(R.id.action_details).setVisible(documentData != null && faceWithImage != null);
         return true;
     }
 
@@ -115,11 +117,16 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
                 .show();
     }
 
+    @SuppressLint("CheckResult")
     private void showResult(FaceCapture detectedFace) {
         try {
-            float score = getVerID().getFaceRecognition().compareSubjectFacesToFaces(new IRecognizable[]{detectedFace.getFace()}, new IRecognizable[]{cardFaceCapture.getFace()});
+            float score = getVerID().getFaceRecognition().compareSubjectFacesToFaces(new IRecognizable[]{detectedFace.getFace()}, new IRecognizable[]{faceWithImage.getFace()});
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                cardFaceCapture.getFaceImage().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                Rect faceBounds = new Rect();
+                faceWithImage.getFace().getBounds().round(faceBounds);
+                faceBounds.intersect(0, 0, faceWithImage.getBitmap().getWidth(), faceWithImage.getBitmap().getHeight());
+                Bitmap faceImage = Bitmap.createBitmap(faceWithImage.getBitmap(), faceBounds.left, faceBounds.top, faceBounds.width(), faceBounds.height());
+                faceImage.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                 getSharedData().setSharedData(ResultActivity.EXTRA_CARD_FACE_CAPTURE, outputStream.toByteArray());
             }
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -136,6 +143,8 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
 
     @Override
     public void onSessionFinished(IVerIDSession<?> abstractVerIDSession, VerIDSessionResult verIDSessionResult) {
-        verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(this::showResult);
+        if (!verIDSessionResult.getError().isPresent()) {
+            verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(this::showResult);
+        }
     }
 }

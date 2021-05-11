@@ -1,8 +1,10 @@
 package com.appliedrec.credentials.app;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,11 +16,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.exifinterface.media.ExifInterface;
 
 import com.appliedrec.credentials.app.databinding.ActivityMainBinding;
-import com.appliedrec.verid.core2.Bearing;
 import com.appliedrec.verid.core2.Face;
 import com.appliedrec.verid.core2.RecognizableFace;
 import com.appliedrec.verid.core2.VerIDImageBitmap;
-import com.appliedrec.verid.core2.session.FaceCapture;
 import com.microblink.entities.recognizers.Recognizer;
 import com.microblink.entities.recognizers.RecognizerBundle;
 import com.microblink.entities.recognizers.blinkid.DataMatchResult;
@@ -90,23 +90,22 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.about:
-                showAbout();
-                return true;
-            case R.id.settings:
-                showSettings();
-                return true;
-            case R.id.supported_documents:
-                showSupportedDocuments();
-                return true;
+        if (item.getItemId() == R.id.about) {
+            showAbout();
+        } else if (item.getItemId() == R.id.settings) {
+            showSettings();
+        } else if (item.getItemId() == R.id.supported_documents) {
+            showSupportedDocuments();
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 
     private void showCardFromResult(BlinkIdCombinedRecognizer.Result result) {
         byte[] frontImage = result.getEncodedFrontFullDocumentImage();
-        Single<FaceCapture> single = Single.<Bitmap>create(emitter -> {
+        @SuppressLint("CheckResult")
+        Single<FaceWithImage> single = Single.<Bitmap>create(emitter -> {
             try {
                 if (frontImage.length == 0) {
                     throw new Exception(getString(R.string.failed_to_collect_card_image));
@@ -122,7 +121,7 @@ public class MainActivity extends BaseActivity {
                 Face[] faces = getVerID().getFaceDetection().detectFacesInImage(image.createFaceDetectionImage(), 1, 0);
                 if (faces.length > 0) {
                     RecognizableFace[] recognizableFaces = getVerID().getFaceRecognition().createRecognizableFacesFromFaces(faces, image);
-                    emitter.onSuccess(new FaceCapture(recognizableFaces[0], Bearing.STRAIGHT, bitmap));
+                    emitter.onSuccess(new FaceWithImage(recognizableFaces[0], bitmap));
                 } else {
                     throw new Exception(getString(R.string.failed_to_detect_face_in_card));
                 }
@@ -143,7 +142,7 @@ public class MainActivity extends BaseActivity {
             viewBinding.progressBar.setVisibility(View.VISIBLE);
             viewBinding.mainUI.setVisibility(View.INVISIBLE);
             recognizerBundle.loadFromIntent(data);
-            Recognizer firstRecognizer = recognizerBundle.getRecognizers()[0];
+            Recognizer<?> firstRecognizer = recognizerBundle.getRecognizers()[0];
             if (firstRecognizer instanceof BlinkIdCombinedRecognizer) {
                 BlinkIdCombinedRecognizer.Result result = ((BlinkIdCombinedRecognizer)firstRecognizer).getResult();
                 if (result.getDocumentDataMatch() == DataMatchResult.Failed) {
@@ -194,11 +193,11 @@ public class MainActivity extends BaseActivity {
                 .show();
     }
 
-    private void showCard(FaceCapture faceCapture, DocumentData documentData) {
+    private void showCard(FaceWithImage faceWithImage, DocumentData documentData) {
         viewBinding.progressBar.setVisibility(View.GONE);
         viewBinding.mainUI.setVisibility(View.VISIBLE);
         try {
-            getSharedData().setSharedObject(IDCardActivity.EXTRA_FACE_CAPTURE, faceCapture);
+            getSharedData().setSharedObject(IDCardActivity.EXTRA_FACE_IMAGE, faceWithImage);
             getSharedData().setSharedObject(IDCardActivity.EXTRA_DOCUMENT_DATA, documentData);
             Intent intent = new Intent(this, IDCardActivity.class);
             startActivity(intent);

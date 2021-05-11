@@ -1,22 +1,17 @@
 package com.appliedrec.credentials.app;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import com.appliedrec.credentials.app.databinding.ActivityResultBinding;
-import com.appliedrec.uielements.facecomparison.ScoreTableActivity;
-import com.appliedrec.verid.core2.session.FaceCapture;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
-
-import java.util.Locale;
 
 public class ResultActivity extends BaseActivity {
 
@@ -33,10 +28,17 @@ public class ResultActivity extends BaseActivity {
         setContentView(viewBinding.getRoot());
         float score = getIntent().getFloatExtra(EXTRA_SCORE, 0f);
         NormalDistribution normalDistribution = new NormalDistribution();
-        double probability = (1.0D - normalDistribution.cumulativeProbability(score)) * 100.0D;
-        viewBinding.scoreTextView.setText(String.format(Locale.getDefault(), "%.02f", score));
-        viewBinding.farExplanation.setText(this.getString(R.string.far_explanation, probability));
-        viewBinding.button.setOnClickListener(button -> startActivity(new Intent(this, ScoreTableActivity.class)));
+        double probability = normalDistribution.cumulativeProbability(score) * 100.0D;
+        float threshold = 3f;
+        if (score >= threshold) {
+            viewBinding.resultTextView.setText(R.string.pass);
+            viewBinding.resultTextView.setTextColor(Color.argb(0xFF, 0x36, 0xAF, 0x00));
+            viewBinding.farExplanation.setText(this.getString(R.string.far_explanation, score, probability, threshold));
+        } else {
+            viewBinding.resultTextView.setText(R.string.warning);
+            viewBinding.resultTextView.setTextColor(Color.RED);
+            viewBinding.farExplanation.setText(this.getString(R.string.warning_explanation, score, threshold));
+        }
     }
 
     @Override

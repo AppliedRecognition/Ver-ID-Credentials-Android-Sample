@@ -42,8 +42,7 @@ The project contains a sample application that uses Microblink's [BlinkID SDK](h
     }
     
     dependencies {
-        implementation 'com.appliedrec.verid:rx:[1.10,2.0['
-        implementation 'com.appliedrec.verid:ui:[1.20,2.0['
+        implementation 'com.appliedrec.verid:ui2:[2.0,3.0['
     }
     ~~~
 
@@ -59,7 +58,7 @@ The project contains a sample application that uses Microblink's [BlinkID SDK](h
     }
     
     dependencies {
-        implementation('com.microblink:blinkid:5.0.0@aar') {
+        implementation('com.microblink:blinkid:5.11.0@aar') {
             transitive = true
         }
     }
@@ -74,13 +73,14 @@ The project contains a sample application that uses Microblink's [BlinkID SDK](h
 public class MyActivity extends AppCompatActivity {
 	
     private RecognizerBundle recognizerBundle;
+    private VerID verID; // See Example 2 for instructions on how to load VerID
     private static final int REQUEST_CODE_ID_CAPTURE = 0;
     
     /**
      * Call this method to start the ID capture 
      * (for example in response to a button click).
      */
-    void runIdCapture() {
+    void startCapture() {
         try {
             // Set the Microblink licence key
             // This example assumes the key is set in your build.gradle file
@@ -91,14 +91,12 @@ public class MyActivity extends AppCompatActivity {
         }
         // To enable high-res images in intents
         MicroblinkSDK.setIntentDataTransferMode(IntentDataTransferMode.PERSISTED_OPTIMISED);
-        // To detect US or Canadian ID card
-        UsdlCombinedRecognizer recognizer = new UsdlCombinedRecognizer();
+        // Create a recognizer to detect an ID card
+        BlinkIdCombinedRecognizer recognizer = new BlinkIdCombinedRecognizer();
         recognizer.setEncodeFullDocumentImage(true);
-        // For ID cards issued outside USA or Canada uncomment the following 2 lines and delete the 2 lines above
-        // BlinkIdCombinedRecognizerrecognizer = new BlinkIdCombinedRecognizer();
-        // recognizer.setEncodeFullDocumentImage(true);
-        SuccessFrameGrabberRecognizer successFrameGrabberRecognizer = new SuccessFrameGrabberRecognizer(recognizer);
-        recognizerBundle = new RecognizerBundle(successFrameGrabberRecognizer);
+        recognizerBundle = new RecognizerBundle(recognizer);
+        BlinkIdUISettings uiSettings = new BlinkIdUISettings(recognizerBundle);
+        uiSettings.enableHighResSuccessFrameCapture(true);
         startActivityForResult(intent, REQUEST_CODE_ID_CAPTURE);
 	}
 	
@@ -110,31 +108,35 @@ public class MyActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_ID_CAPTURE && resultCode == RESULT_OK && data != null) {
-            // Load the ID capture result from the data intent
-            recognizerBundle.loadFromIntent(data);
-
-            Recognizer firstRecognizer = recognizerBundle.getRecognizers()[0];
-            SuccessFrameGrabberRecognizer successFrameGrabberRecognizer = (SuccessFrameGrabberRecognizer) firstRecognizer;
-            
-            byte[] frontImage;
-            if (successFrameGrabberRecognizer.getSlaveRecognizer() instanceof UsdlCombinedRecognizer) {
-                frontImage = ((UsdlCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult().getEncodedFullDocumentImage();
-            } else if (successFrameGrabberRecognizer.getSlaveRecognizer() instanceof BlinkIdCombinedRecognizer) {
-                frontImage = ((BlinkIdCombinedRecognizer) successFrameGrabberRecognizer.getSlaveRecognizer()).getResult().getEncodedFrontFullDocumentImage();
-            } else {
-                return;
+            try {
+                // Load the ID capture result from the data intent
+                recognizerBundle.loadFromIntent(data);
+    
+                Recognizer<?> firstRecognizer = recognizerBundle.getRecognizers()[0];
+                if (firstRecognizer instanceof BlinkIdCombinedRecognizer) {
+                    BlinkIdCombinedRecognizer.Result result = ((BlinkIdCombinedRecognizer)firstRecognizer).getResult();
+                    if (result.getDocumentDataMatch() == DataMatchResult.Failed) {
+                        // The back and front of the card don't match
+                        throw new Exception("Front and back of the ID card don't match");
+                    }
+                }
+                byte[] frontImage = result.getEncodedFrontFullDocumentImage();
+                if (frontImage.length == 0) {
+                    throw new Exception("Unable to retrieve an image of the ID card");
+                }
+                Bitmap frontImageBitmap = BitmapFactory.decodeByteArray(frontImage, 0, frontImage.length);
+                VerIDImageBitmap image = new VerIDImageBitmap(frontImageBitmap, ExifInterface.ORIENTATION_NORMAL);
+                Face[] faces = verID.getFaceDetection().detectFacesInImage(image.createFaceDetectionImage(), 1, 0);
+                if (faces.length > 0) {
+                    RecognizableFace[] recognizableFaces = verID.getFaceRecognition().createRecognizableFacesFromFaces(faces, image);             
+                    RecognizableFace face = recognizableFaces[0];
+                    // Face can be used for face recognition
+                } else {
+                    throw new Exception("Failed to detect a face on the ID card");
+                }
+            } catch (Exception e) {
+                // TODO: Handle exception
             }
-            // Save the image of the front of the card in your app's files
-            File imageFile = new File(getFilesDir(), "cardFront.jpg");
-            FileOutputStream outputStream = new FileOutputStream(imageFile);
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(frontImage);
-            int read;
-            byte[] buffer = new byte[512];
-            while ((read = inputStream.read(buffer, 0, buffer.length)) > 0) {
-                outputStream.write(buffer, 0, read);
-            }
-            outputStream.close();
-            inputStream.close();
 		}
 	}
 }
@@ -143,64 +145,58 @@ public class MyActivity extends AppCompatActivity {
 ## Example 2 – Capture live face
 
 ~~~java
-public class MyActivity extends AppCompatActivity {
-	
-    private static final int REQUEST_CODE_LIVENESS_DETECTION = 1;
-    private RxVerID rxVerID;
-    
+public class MyActivity extends AppCompatActivity implements VerIDFactoryDelegate, VerIDSessionDelegate {
+	 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
-        rxVerID = new RxVerID.Builder(this).build();
     }
         	
     /**
      * Call this method to start the liveness detection session
      * (for example in response to a button click).
      */
-    void runLivenessDetection() {
-        rxVerID.getVerID() // Load Ver-ID
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                verID -> {
-                    // Create liveness detection settings
-                    LivenessDetectionSessionSettings settings = new LivenessDetectionSessionSettings();
-                    // Construct the liveness detection intent
-                    VerIDLivenessDetectionIntent intent = new VerIDLivenessDetectionIntent(this, verID, settings);
-                    // Start the liveness detection activity
-                    startActivityForResult(intent, REQUEST_CODE_LIVENESS_DETECTION);
-                },
-                error -> {
-                    // Ver-ID failed to load
-                });
+    void startLivenessDetection() {
+        // Load Ver-ID
+        VerIDFactory verIDFactory = new VerIDFactory(this, this);
+        verIDFactory.createVerID();
     }
-    	
-    /**
-     * Listen for the result of the liveness detection
-     */
+    
+    //region VerIDFactoryDelegate
+    
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_LIVENESS_DETECTION && resultCode == RESULT_OK) {
-            rxVerID.getSessionResultFromIntent(data)
-                .flatMapObservable(result -> rxVerID.getFacesAndImageUrisFromSessionResult(result, Bearing.STRAIGHT))
-                .filter(detectedFace -> detectedFace.getFace() instanceof RecognizableFace)
-                .firstOrError()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        detectedFace -> {
-                            // You can now use the face for face recognition:
-                            RecognizableFace recognizableFace = (RecognizableFace) detectedFace.getFace();
-                        },
-                        error -> {
-                            // Failed to get the first face from the result
-                        }
-                ));
+    public void onVerIDCreated(VerIDFactory factory, VerID verID) {
+        // Create liveness detection settings
+        LivenessDetectionSessionSettings settings = new LivenessDetectionSessionSettings();
+        // Create VerIDSession
+        VerIDSession session = new VerIDSession(verId, settings);
+        session.setDelegate(this);
+        session.start();
+    }
+    
+    @Override
+    public void onVerIDCreationFailed(VerIDFactory factory, Exception error) {
+    }
+    
+    //endregion
+    
+    //region VerIDSessionDelegate
+    
+    @Override
+    public void onSessionFinished(IVerIDSession<?> session, VerIDSessionResult result) {
+        // Check if result contains an error
+        if (result.getError().isPresent()) {
+            // Liveness detection failed
+            return;
         }
-    }	
+        // Grab the first face capture where the user is looking straight at the camera
+        result.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(capture => {
+            // Face from capture.getFace() can be used for face recognition
+        });
+    }
+    
+    //endregion
 }
 ~~~
 
@@ -208,32 +204,13 @@ public class MyActivity extends AppCompatActivity {
 
 Building on example 1 and 2, you can use the results of the ID capture and liveness detection sessions and compare their faces.
 
-This class takes as input the image file of the front of the card captured in example 1 and the `recognizableFace` captured in example 2.
-
 ~~~java
 class FaceComparison {
-    
-    private final RxVerID rxVerID;
-    
-    /**
-     * Pass an instance of RxVerID to the constructor
-     */
-    FaceComparison(RxVerID rxVerID) {
-        this.rxVerID = rxVerID;
-    }
-    
-    /**
-     * This function returns a Single whose value is a pair of Floats.
-     * The first Float is the comparison score between the two faces.
-     * The second Float in the pair is the threshold required to consider the two faces as authenticated against each other.
-     */
-    Single<Pair<Float,Float>> compareIDCardToLiveFace(Uri imageFileUri, RecognizableFace face) {
-        return rxVerID.detectRecognizableFacesInImage(imageFileUri, 1)
-            .singleOrError()
-            .flatMap(cardFace -> rxVerID.compareFaceToFaces(cardFace, new RecognizableFace[]{face}))
-            .flatMap(score -> rxVerID.getVerID().map(verID -> new Pair<>(score, verID.getFaceRecognition().getAuthenticationThreshold())))
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread());
+
+    // Refer to Example 1 to see how to detect a face in an ID card
+    // Refer to Example 2 to see how to load VerID and detect a "live" face
+    static float compareFaces(VerID verID, RecognizableFace face1, RecognizableFace face2) throws Exception {
+        return verID.getFaceRecognition().compareSubjectFacesToFaces(new IRecognizable[]{face1}, new IRecognizable[]{face2});
     }
 }
 ~~~
@@ -243,10 +220,6 @@ class FaceComparison {
 ### Ver-ID
 - [Github](https://github.com/AppliedRecognition/Ver-ID-UI-Android)
 - [Reference documentation](https://appliedrecognition.github.io/Ver-ID-UI-Android/)
-
-### Rx-Ver-ID
-- [Github](https://github.com/AppliedRecognition/Rx-Ver-ID-Android)
-- [Reference documentation](https://appliedrecognition.github.io/Rx-Ver-ID-Android/)
 
 ### BlinkID
 - [Github](https://github.com/BlinkID/blinkid-android)
