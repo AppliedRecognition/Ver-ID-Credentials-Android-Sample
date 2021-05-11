@@ -3,13 +3,13 @@
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.2'
+        classpath 'com.android.tools.build:gradle:4.2.0'
         classpath 'com.google.gms:google-services:4.3.5'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.5.1'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.5.2'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
@@ -17,16 +17,16 @@ buildscript {
 
 ext {
     appcompatVersion = '[1.2.0,2.0.0['
-    veridVersion = '2.0.0-rc.02'
+    veridVersion = '2.0.1'
     rxveridVersion = '[1.10,2.0['
-    blinkidVersion = '5.8.0'
+    blinkidVersion = '5.11.0'
     veridIdentityVersion = '[1.1.1,2.0.0['
     uiElementsVersion = '[2.0,3.0['
     versionMajor = 7
-    versionMinor = 6
-    versionPatch = 1
+    versionMinor = 7
+    versionPatch = 0
     versionClassifier = null
-    versionClassifierVersion = ""
+    versionClassifierVersion = null
     minSdkVersion = 23
 }
 
@@ -45,7 +45,7 @@ String generateVersionName() {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven { url 'https://maven.fabric.io/public' }
         maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
         maven { url 'https://maven.microblink.com' }
