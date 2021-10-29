@@ -43,4 +43,7 @@
     <string name="warning">Warning</string>
     <string name="warning_explanation">The face matching score <xliff:g example="2.8" id="score">%1$.01f</xliff:g> indicates that the person on the ID card is likely NOT the same person as the one in the selfie. We recommend a threshold of <xliff:g example="3.0" id="threshold">%2$.01f</xliff:g> for a positive identification when comparing faces from identity cards.</string>
     <string name="face_comparison_result">Face comparison result</string>
+    <string name="verid_failed_to_load">Ver-ID failed to load</string>
+    <string name="authenticity_score">Authenticity score</string>
+    <string name="front_back_match_score">Front/back match score</string>
 </resources>

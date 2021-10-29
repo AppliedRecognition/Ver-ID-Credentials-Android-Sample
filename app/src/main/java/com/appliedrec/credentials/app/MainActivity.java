@@ -13,18 +13,28 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.util.Pair;
 import androidx.exifinterface.media.ExifInterface;
 
+import com.appliedrec.barcodedatamatcher.DocumentFrontPageData;
 import com.appliedrec.credentials.app.databinding.ActivityMainBinding;
+import com.appliedrec.verid.core2.Classifier;
 import com.appliedrec.verid.core2.Face;
+import com.appliedrec.verid.core2.FaceDetection;
+import com.appliedrec.verid.core2.FaceDetectionImage;
+import com.appliedrec.verid.core2.IFaceDetection;
 import com.appliedrec.verid.core2.RecognizableFace;
 import com.appliedrec.verid.core2.VerIDImageBitmap;
 import com.microblink.entities.recognizers.Recognizer;
 import com.microblink.entities.recognizers.RecognizerBundle;
 import com.microblink.entities.recognizers.blinkid.DataMatchResult;
 import com.microblink.entities.recognizers.blinkid.generic.BlinkIdCombinedRecognizer;
+import com.microblink.entities.recognizers.blinkid.generic.viz.VizResult;
 import com.microblink.uisettings.ActivityRunner;
 import com.microblink.uisettings.BlinkIdUISettings;
+
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
@@ -105,7 +115,7 @@ public class MainActivity extends BaseActivity {
     private void showCardFromResult(BlinkIdCombinedRecognizer.Result result) {
         byte[] frontImage = result.getEncodedFrontFullDocumentImage();
         @SuppressLint("CheckResult")
-        Single<FaceWithImage> single = Single.<Bitmap>create(emitter -> {
+        Single<Pair<FaceWithImage,Float>> single = Single.<Bitmap>create(emitter -> {
             try {
                 if (frontImage.length == 0) {
                     throw new Exception(getString(R.string.failed_to_collect_card_image));
@@ -121,16 +131,30 @@ public class MainActivity extends BaseActivity {
                 Face[] faces = getVerID().getFaceDetection().detectFacesInImage(image.createFaceDetectionImage(), 1, 0);
                 if (faces.length > 0) {
                     RecognizableFace[] recognizableFaces = getVerID().getFaceRecognition().createRecognizableFacesFromFaces(faces, image);
-                    emitter.onSuccess(new FaceWithImage(recognizableFaces[0], bitmap));
+                    Float authenticityScore = null;
+                    try {
+                        if (AuthenticityScoreSupport.defaultInstance().isDocumentSupported(result)) {
+                            IFaceDetection<FaceDetectionImage> faceDetection = getVerID().getFaceDetection();
+                            FaceDetection veridFaceDetection = (FaceDetection)faceDetection;
+                            Classifier[] authenticityClassifiers = AuthenticityScoreSupport.defaultInstance().getClassifiers(this);
+                            for (Classifier classifier : authenticityClassifiers) {
+                                float score = veridFaceDetection.extractAttributeFromFace(faces[0], image, classifier.getName());
+                                if (authenticityScore == null || score > authenticityScore) {
+                                    authenticityScore = score;
+                                }
+                            }
+                        }
+                    } catch (Exception ignore) {}
+                    emitter.onSuccess(new FaceWithImage(recognizableFaces[0], bitmap, authenticityScore));
                 } else {
                     throw new Exception(getString(R.string.failed_to_detect_face_in_card));
                 }
             } catch (Exception e) {
                 emitter.onError(e);
             }
-        });
+        }).zipWith(new FrontBackMatcher().getFrontBackMatchScore(result).onErrorReturn(error -> null), (faceWithImage, frontBackMatchScore) -> new Pair<>((FaceWithImage) faceWithImage, frontBackMatchScore));
         addDisposable(single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
-                faceCapture -> showCard(faceCapture, new DocumentData(result)),
+                faceCapture -> showCard(faceCapture.first, new DocumentData(result), faceCapture.second),
                 this::showError
         ));
     }
@@ -193,13 +217,16 @@ public class MainActivity extends BaseActivity {
                 .show();
     }
 
-    private void showCard(FaceWithImage faceWithImage, DocumentData documentData) {
+    private void showCard(FaceWithImage faceWithImage, DocumentData documentData, Float frontBackMatchScore) {
         viewBinding.progressBar.setVisibility(View.GONE);
         viewBinding.mainUI.setVisibility(View.VISIBLE);
         try {
             getSharedData().setSharedObject(IDCardActivity.EXTRA_FACE_IMAGE, faceWithImage);
             getSharedData().setSharedObject(IDCardActivity.EXTRA_DOCUMENT_DATA, documentData);
             Intent intent = new Intent(this, IDCardActivity.class);
+            if (frontBackMatchScore != null) {
+                intent.putExtra(IDCardActivity.EXTRA_FRONT_BACK_MATCH_SCORE, frontBackMatchScore);
+            }
             startActivity(intent);
         } catch (Exception e) {
             new AlertDialog.Builder(this)

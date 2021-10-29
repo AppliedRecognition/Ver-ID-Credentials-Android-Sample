@@ -17,11 +17,13 @@ public class FaceWithImageCborAdapter implements CborCoder<FaceWithImage> {
 
     public static final String FIELD_FACE = "face";
     public static final String FIELD_IMAGE = "image";
+    public static final String FIELD_AUTHENTICITY_SCORE = "authenticityScore";
 
     @Override
     public FaceWithImage decodeFromCbor(CBORParser parser) throws Exception {
         RecognizableFace face = null;
         Bitmap bitmap = null;
+        Float authenticityScore = null;
         if ((parser.hasCurrentToken() && parser.getCurrentToken() == JsonToken.START_OBJECT) || parser.nextToken() == JsonToken.START_OBJECT) {
             while (parser.nextToken() == JsonToken.FIELD_NAME) {
                 String fieldName = parser.getCurrentName();
@@ -33,11 +35,13 @@ public class FaceWithImageCborAdapter implements CborCoder<FaceWithImage> {
                 } else if (FIELD_IMAGE.equals(fieldName) && parser.nextToken() != JsonToken.VALUE_NULL) {
                     byte[] encodedBitmap = parser.getBinaryValue();
                     bitmap = BitmapFactory.decodeByteArray(encodedBitmap, 0, encodedBitmap.length);
+                } else if (FIELD_AUTHENTICITY_SCORE.equals(fieldName) && parser.nextToken() == JsonToken.VALUE_NUMBER_FLOAT) {
+                    authenticityScore = parser.getFloatValue();
                 }
             }
         }
         if (face != null && bitmap != null) {
-            return new FaceWithImage(face, bitmap);
+            return new FaceWithImage(face, bitmap, authenticityScore);
         }
         throw new Exception("Failed to decode face and image from CBOR");
     }
@@ -52,6 +56,10 @@ public class FaceWithImageCborAdapter implements CborCoder<FaceWithImage> {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             faceWithImage.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
             cborGenerator.writeBinaryField(FIELD_IMAGE, outputStream.toByteArray());
+        }
+        Float authenticitScore = faceWithImage.getAuthenticityScore();
+        if (authenticitScore != null) {
+            cborGenerator.writeNumberField(FIELD_AUTHENTICITY_SCORE, authenticitScore);
         }
         cborGenerator.writeEndObject();
     }

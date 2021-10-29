@@ -29,8 +29,11 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
 
     public static final String EXTRA_FACE_IMAGE = "com.appliedrec.verid.EXTRA_FACE_IMAGE";
     public static final String EXTRA_DOCUMENT_DATA = "com.appliedrec.verid.EXTRA_DOCUMENT_DATA";
+    public static final String EXTRA_AUTHENTICITY_SCORE = "com.appliedrec.verid.EXTRA_AUTHENTICITY_SCORE";
+    public static final String EXTRA_FRONT_BACK_MATCH_SCORE = "com.appliedrec.verid.EXTRA_FRONT_BACK_MATCH_SCORE";
     private FaceWithImage faceWithImage;
     private DocumentData documentData;
+    private Float frontBackMatchScore;
     private ActivityIdcardBinding viewBinding;
 
     @Override
@@ -38,6 +41,10 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
         super.onCreate(savedInstanceState);
         viewBinding = ActivityIdcardBinding.inflate(getLayoutInflater());
         setContentView(viewBinding.getRoot());
+        frontBackMatchScore = getIntent().getFloatExtra(EXTRA_FRONT_BACK_MATCH_SCORE, -1f);
+        if (frontBackMatchScore == -1f) {
+            frontBackMatchScore = null;
+        }
     }
 
     @Override
@@ -94,6 +101,12 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
     private void showCardDetails() {
         Intent intent = new Intent(this, DocumentDetailsActivity.class);
         intent.putExtra(EXTRA_DOCUMENT_DATA, documentData);
+        if (faceWithImage != null && faceWithImage.getAuthenticityScore() != null) {
+            intent.putExtra(EXTRA_AUTHENTICITY_SCORE, faceWithImage.getAuthenticityScore());
+        }
+        if (frontBackMatchScore != null) {
+            intent.putExtra(EXTRA_FRONT_BACK_MATCH_SCORE, frontBackMatchScore);
+        }
         startActivity(intent);
     }
 

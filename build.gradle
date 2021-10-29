@@ -4,7 +4,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
@@ -23,8 +22,8 @@ ext {
     veridIdentityVersion = '[1.1.1,2.0.0['
     uiElementsVersion = '[2.0,3.0['
     versionMajor = 7
-    versionMinor = 7
-    versionPatch = 1
+    versionMinor = 8
+    versionPatch = 0
     versionClassifier = null
     versionClassifierVersion = null
     minSdkVersion = 23
@@ -50,6 +49,7 @@ allprojects {
         maven { url 'https://dev.ver-id.com/artifactory/gradle-release' }
         maven { url 'https://maven.microblink.com' }
         maven { url 'https://mvnrepository.com/artifact/org.apache.commons/commons-math3' }
+        maven { url 'https://jitpack.io' }
     }
 }
 

@@ -10,10 +10,17 @@ public class FaceWithImage {
 
     private RecognizableFace face;
     private Bitmap bitmap;
+    private Float authenticityScore;
 
     public FaceWithImage(RecognizableFace face, Bitmap bitmap) {
         this.face = face;
         this.bitmap = bitmap;
+    }
+
+    public FaceWithImage(RecognizableFace face, Bitmap bitmap, Float authenticityScore) {
+        this.face = face;
+        this.bitmap = bitmap;
+        this.authenticityScore = authenticityScore;
     }
 
     public RecognizableFace getFace() {
@@ -22,5 +29,9 @@ public class FaceWithImage {
 
     public Bitmap getBitmap() {
         return bitmap;
+    }
+
+    public Float getAuthenticityScore() {
+        return authenticityScore;
     }
 }

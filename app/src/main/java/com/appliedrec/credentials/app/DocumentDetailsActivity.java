@@ -75,7 +75,21 @@ public class DocumentDetailsActivity extends BaseActivity {
         setContentView(viewBinding.getRoot());
         Intent intent = getIntent();
         if (intent != null) {
+            Float authenticityScore;
+            Float frontBackMatchScore;
             DocumentData documentData = intent.getParcelableExtra(IDCardActivity.EXTRA_DOCUMENT_DATA);
+            float score = intent.getFloatExtra(IDCardActivity.EXTRA_FRONT_BACK_MATCH_SCORE, -1f);
+            if (score == -1f) {
+                frontBackMatchScore = null;
+            } else {
+                frontBackMatchScore = score;
+            }
+            score = intent.getFloatExtra(IDCardActivity.EXTRA_AUTHENTICITY_SCORE, -1f);
+            if (score == -1f) {
+                authenticityScore = null;
+            } else {
+                authenticityScore = score;
+            }
             if (documentData != null) {
                 if (documentData.getRawBarcode() != null) {
                     try {
@@ -86,7 +100,7 @@ public class DocumentDetailsActivity extends BaseActivity {
                             addDisposable(barcodeVerifier.parseBarcode(documentData.getRawBarcode()).toList().observeOn(AndroidSchedulers.mainThread()).subscribe(
                                     this::showProperties,
                                     error -> {
-                                        showProperties(propertiesFromDocumentData(documentData));
+                                        showProperties(propertiesFromDocumentData(documentData, frontBackMatchScore, authenticityScore));
                                         new AlertDialog.Builder(this)
                                                 .setTitle(R.string.error)
                                                 .setMessage(R.string.failed_to_verify_barcode)
@@ -101,7 +115,7 @@ public class DocumentDetailsActivity extends BaseActivity {
                         e.printStackTrace();
                     }
                 }
-                showProperties(propertiesFromDocumentData(documentData));
+                showProperties(propertiesFromDocumentData(documentData, frontBackMatchScore, authenticityScore));
             }
         }
     }
@@ -112,8 +126,14 @@ public class DocumentDetailsActivity extends BaseActivity {
         viewBinding = null;
     }
 
-    private List<Pair<String,String>> propertiesFromDocumentData(DocumentData documentData) {
+    private List<Pair<String,String>> propertiesFromDocumentData(DocumentData documentData, Float frontBackMatchScore, Float authenticityScore) {
         ArrayList<Pair<String,String>> properties = new ArrayList<>();
+        if (authenticityScore != null) {
+            properties.add(new Pair<>(getString(R.string.authenticity_score), String.format("%.02f", authenticityScore)));
+        }
+        if (frontBackMatchScore != null) {
+            properties.add(new Pair<>(getString(R.string.front_back_match_score), String.format("%.0f%%", frontBackMatchScore * 100f)));
+        }
         if (documentData.getFirstName() != null && !documentData.getFirstName().isEmpty()) {
             properties.add(new Pair<>(getString(R.string.first_name), documentData.getFirstName()));
         }
