@@ -29,6 +29,7 @@ import com.microblink.entities.recognizers.Recognizer;
 import com.microblink.entities.recognizers.RecognizerBundle;
 import com.microblink.entities.recognizers.blinkid.DataMatchResult;
 import com.microblink.entities.recognizers.blinkid.generic.BlinkIdCombinedRecognizer;
+import com.microblink.entities.recognizers.blinkid.generic.ProcessingStatus;
 import com.microblink.entities.recognizers.blinkid.generic.viz.VizResult;
 import com.microblink.uisettings.ActivityRunner;
 import com.microblink.uisettings.BlinkIdUISettings;
@@ -152,9 +153,15 @@ public class MainActivity extends BaseActivity {
             } catch (Exception e) {
                 emitter.onError(e);
             }
-        }).zipWith(new FrontBackMatcher().getFrontBackMatchScore(result).onErrorReturn(error -> null), (faceWithImage, frontBackMatchScore) -> new Pair<>((FaceWithImage) faceWithImage, frontBackMatchScore));
+        }).zipWith(new FrontBackMatcher().getFrontBackMatchScore(result), (faceWithImage, frontBackMatchScore) -> new Pair<>((FaceWithImage) faceWithImage, frontBackMatchScore));
         addDisposable(single.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
-                faceCapture -> showCard(faceCapture.first, new DocumentData(result), faceCapture.second),
+                faceCapture -> {
+                    Float frontBackMatchScore = faceCapture.second;
+                    if (frontBackMatchScore < 0) {
+                        frontBackMatchScore = null;
+                    }
+                    showCard(faceCapture.first, new DocumentData(result), frontBackMatchScore);
+                },
                 this::showError
         ));
     }
@@ -169,7 +176,14 @@ public class MainActivity extends BaseActivity {
             Recognizer<?> firstRecognizer = recognizerBundle.getRecognizers()[0];
             if (firstRecognizer instanceof BlinkIdCombinedRecognizer) {
                 BlinkIdCombinedRecognizer.Result result = ((BlinkIdCombinedRecognizer)firstRecognizer).getResult();
-                if (result.getDocumentDataMatch() == DataMatchResult.Failed) {
+                if (result.getProcessingStatus() != ProcessingStatus.Success) {
+                    new AlertDialog.Builder(this)
+                            .setTitle(R.string.scan_failed)
+                            .setNegativeButton(android.R.string.cancel, null)
+                            .setPositiveButton(R.string.proceed_anyway, (dialog, which) -> showCardFromResult(result))
+                            .create()
+                            .show();
+                } else if (result.getDocumentDataMatch() == DataMatchResult.Failed) {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.invalid_licence)
                             .setMessage(R.string.front_and_back_dont_match)

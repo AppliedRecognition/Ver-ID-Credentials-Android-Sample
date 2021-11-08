@@ -4,9 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,6 +36,25 @@ public class DocumentDetailsActivity extends BaseActivity {
         void bind(String name, String value) {
             viewBinding.key.setText(name);
             viewBinding.value.setText(value);
+            String text;
+            Context context = itemView.getContext();
+            if (name.equals(context.getString(R.string.authenticity_score))) {
+                @StringRes int statusRes = Float.parseFloat(value) > 0.6f ? R.string.is : R.string.is_not;
+                text = context.getString(R.string.auth_score_explanation, value, context.getString(statusRes));
+            } else if (name.equals(context.getString(R.string.front_back_match_score))) {
+                text = context.getString(R.string.front_back_match_score_explanation, value);
+            } else {
+                viewBinding.getRoot().setOnClickListener(null);
+                viewBinding.infoIcon.setVisibility(View.GONE);
+                return;
+            }
+            viewBinding.infoIcon.setVisibility(View.VISIBLE);
+            viewBinding.getRoot().setOnClickListener((view) -> {
+                Intent intent = new Intent(view.getContext(), TextViewActivity.class);
+                intent.putExtra(Intent.EXTRA_TITLE, name);
+                intent.putExtra(Intent.EXTRA_TEXT, text);
+                view.getContext().startActivity(intent);
+            });
         }
     }
 

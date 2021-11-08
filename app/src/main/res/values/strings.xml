@@ -46,4 +46,10 @@
     <string name="verid_failed_to_load">Ver-ID failed to load</string>
     <string name="authenticity_score">Authenticity score</string>
     <string name="front_back_match_score">Front/back match score</string>
+    <string name="scan_failed">Scan failed</string>
+    <string name="auth_score_explanation">Ver-ID uses machine learning to calculate an authenticity score. The score between 0.0 and 1.0 indicates the authenticity of the document holder\'s image. Higher scores mean a lesser chance that the image has been tampered with.\n\nThis scan\'s score of <xliff:g example="0.90" id="score">%1$s</xliff:g> suggests that the document <xliff:g example="is" id="status">%2$s</xliff:g> authentic.</string>
+    <string name="front_back_match_score_explanation">The score indicates how well the information on the front of the document matches the information on the barcode. The comparison uses a fuzzy string matching algorithm.\n\nIn this scan, <xliff:g example="100%">%1$s</xliff:g> of the information on the front matches the barcode.</string>
+    <string name="is">is</string>
+    <string name="is_not">is not</string>
+    <string name="more_info">More info</string>
 </resources>

@@ -23,11 +23,11 @@ public class FrontBackMatcher {
         return Single.create(emitter -> {
             VizResult frontResult = result.getFrontVizResult();
             if (frontResult.isEmpty()) {
-                emitter.onError(new Exception("Front page result is empty"));
+                emitter.onSuccess(-1f);
                 return;
             }
             if (result.getBarcodeResult().isEmpty()) {
-                emitter.onError(new Exception("Barcode result is empty"));
+                emitter.onSuccess(-1f);
                 return;
             }
             Set<BarcodeMatching> matchers = new ArraySet<>();
