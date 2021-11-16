@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
@@ -60,8 +61,7 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
             documentData = getSharedData().getSharedObject(EXTRA_DOCUMENT_DATA, DocumentData.class);
             invalidateOptionsMenu();
             viewBinding.button.setOnClickListener(v -> startLivenessDetection());
-        } catch (Exception e) {
-
+        } catch (Exception ignore) {
         }
     }
 
@@ -117,14 +117,13 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
             session.setDelegate(this);
             session.start();
         } catch (Exception e) {
-            showError(e);
+            showError(R.string.failed_to_start_session);
         }
     }
 
-    private void showError(Throwable error) {
+    private void showError(@StringRes int error) {
         new AlertDialog.Builder(this)
-                .setTitle(R.string.face_comparison_failed)
-                .setMessage(error.getLocalizedMessage())
+                .setTitle(error)
                 .setPositiveButton(android.R.string.ok, null)
                 .create()
                 .show();
@@ -150,7 +149,7 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
             intent.putExtra(ResultActivity.EXTRA_SCORE, score);
             startActivity(intent);
         } catch (Exception e) {
-            showError(e);
+            showError(R.string.failed_to_prepare_face_images);
         }
     }
 
@@ -158,6 +157,8 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
     public void onSessionFinished(IVerIDSession<?> abstractVerIDSession, VerIDSessionResult verIDSessionResult) {
         if (!verIDSessionResult.getError().isPresent()) {
             verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(this::showResult);
+        } else {
+            showError(R.string.face_capture_failed);
         }
     }
 }

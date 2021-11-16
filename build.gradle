@@ -23,7 +23,7 @@ ext {
     uiElementsVersion = '[2.0,3.0['
     versionMajor = 7
     versionMinor = 8
-    versionPatch = 1
+    versionPatch = 2
     versionClassifier = null
     versionClassifierVersion = null
     minSdkVersion = 23
