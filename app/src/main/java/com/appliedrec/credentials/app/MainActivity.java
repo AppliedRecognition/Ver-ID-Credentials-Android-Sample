@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,7 +15,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
 import androidx.exifinterface.media.ExifInterface;
 
-import com.appliedrec.barcodedatamatcher.DocumentFrontPageData;
 import com.appliedrec.credentials.app.databinding.ActivityMainBinding;
 import com.appliedrec.verid.core2.Classifier;
 import com.appliedrec.verid.core2.Face;
@@ -30,12 +28,8 @@ import com.microblink.entities.recognizers.RecognizerBundle;
 import com.microblink.entities.recognizers.blinkid.DataMatchResult;
 import com.microblink.entities.recognizers.blinkid.generic.BlinkIdCombinedRecognizer;
 import com.microblink.entities.recognizers.blinkid.generic.ProcessingStatus;
-import com.microblink.entities.recognizers.blinkid.generic.viz.VizResult;
 import com.microblink.uisettings.ActivityRunner;
 import com.microblink.uisettings.BlinkIdUISettings;
-
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
@@ -61,6 +55,7 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         viewBinding = null;
+        recognizerBundle = null;
     }
 
     @Override
@@ -169,7 +164,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE_SCAN_ID_CARD && resultCode == RESULT_OK && data != null) {
+        if (requestCode == REQUEST_CODE_SCAN_ID_CARD && resultCode == RESULT_OK && data != null && recognizerBundle != null) {
             viewBinding.progressBar.setVisibility(View.VISIBLE);
             viewBinding.mainUI.setVisibility(View.INVISIBLE);
             recognizerBundle.loadFromIntent(data);
@@ -208,8 +203,6 @@ public class MainActivity extends BaseActivity {
         BlinkIdCombinedRecognizer recognizer = new BlinkIdCombinedRecognizer();
         recognizer.setReturnFullDocumentImage(true);
         recognizer.setEncodeFullDocumentImage(true);
-        recognizer.setReturnFaceImage(true);
-        recognizer.setEncodeFaceImage(true);
         recognizerBundle = new RecognizerBundle(recognizer);
         BlinkIdUISettings uiSettings = new BlinkIdUISettings(recognizerBundle);
         uiSettings.enableHighResSuccessFrameCapture(true);
