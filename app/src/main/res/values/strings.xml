@@ -55,4 +55,5 @@
     <string name="face_capture_failed">Face capture failed</string>
     <string name="failed_to_start_session">Failed to start session</string>
     <string name="failed_to_prepare_face_images">Failed to prepare face images</string>
+    <string name="failed_to_extract_frontal_face_image">Failed to extract frontal face image</string>
 </resources>

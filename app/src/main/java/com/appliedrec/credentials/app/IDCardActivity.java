@@ -156,7 +156,11 @@ public class IDCardActivity extends BaseActivity implements VerIDSessionDelegate
     @Override
     public void onSessionFinished(IVerIDSession<?> abstractVerIDSession, VerIDSessionResult verIDSessionResult) {
         if (!verIDSessionResult.getError().isPresent()) {
-            verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).ifPresent(this::showResult);
+            if (verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).isPresent()) {
+                showResult(verIDSessionResult.getFirstFaceCapture(Bearing.STRAIGHT).get());
+            } else {
+                showError(R.string.failed_to_extract_frontal_face_image);
+            }
         } else {
             showError(R.string.face_capture_failed);
         }
