@@ -1,26 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.appliedrec.credentials.app"
-    tools:ignore="GoogleAppIndexingWarning">
-
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name=".CredentialsApplication"
-        android:allowBackup="false"
-        android:extractNativeLibs="true"
+        android:name=".IDCaptureApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
-        tools:replace="android:allowBackup,android:theme">
+        android:theme="@style/Theme.IDCapture"
+        tools:targetApi="31">
         <activity
-            android:name=".TextViewActivity"
+            android:name=".BarcodeScannerActivity"
             android:exported="false" />
-        <activity android:name=".ResultActivity" />
         <activity
-            android:name=".LoadingActivity"
+            android:name=".DocumentDetailsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ErrorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FaceComparisonActivity"
+            android:exported="false" />
+        <activity
+            android:name=".IDDocumentActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,26 +40,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity" />
-        <activity
-            android:name=".DocumentDetailsActivity"
-            android:label="@string/details" />
-        <activity
-            android:name=".AboutActivity"
-            android:label="@string/about" />
-        <activity
-            android:name=".WebViewActivity"
-            android:label="@string/supported_documents" />
-        <activity
-            android:name=".IDCardActivity"
-            android:label="@string/your_id_card" />
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/id_capture" />
 
         <meta-data
             android:name="com.appliedrec.verid.password"
             android:value="${veridPassword}" />
+        <meta-data
+            android:name="docver.clientid"
+            android:value="${docverClientId}" />
+        <meta-data
+            android:name="docver.clientsecret"
+            android:value="${docverClientSecret}" />
+        <meta-data
+            android:name="docver.url"
+            android:value="${docverUrl}" />
+        <meta-data
+            android:name="supportedDocumentsUrl"
+            android:value="${supportedDocumentsUrl}" />
     </application>
 
 </manifest>

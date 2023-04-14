@@ -1,23 +1,35 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "30.0.3"
+    namespace 'com.appliedrec.credentials.app'
+    compileSdk 33
+
     defaultConfig {
         applicationId "com.appliedrec.credentials.app"
-        minSdkVersion rootProject.minSdkVersion
-        targetSdkVersion 31
-        versionCode rootProject.generateVersionCode()
-        versionName rootProject.generateVersionName()
-        buildConfigField "String", "BLINK_LICENCE_KEY", "\"" + blink5LicenceKey + "\""
-        buildConfigField "String", "BLINK_SUPPORTED_DOCUMENTS_URL", "\"https://github.com/BlinkID/blinkid-android/blob/master/documentation/BlinkIDRecognizer.md\""
-        buildConfigField "String", "INTELLICHECK_URL", "\"https://dev.ver-id.com/id-check/\""
-        manifestPlaceholders = ["veridPassword": "8f821baf-4ae4-41cd-a175-91d7ef6a6db8"]
+        minSdk 24
+        targetSdk 33
+        versionCode 8000000
+        versionName "8.0.0"
+        archivesBaseName += "-$versionName"
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        multiDexEnabled true
+
+        Properties properties = new Properties()
+        if (project.rootProject.file('local.properties').canRead()) {
+            properties.load(project.rootProject.file("local.properties").newDataInputStream())
+        }
+        manifestPlaceholders = [
+                "docverClientId": properties.getProperty("docver.clientid"),
+                "docverClientSecret": properties.getProperty("docver.clientsecret"),
+                "docverUrl": properties.getProperty("docver.url"),
+                "veridPassword": "8f821baf-4ae4-41cd-a175-91d7ef6a6db8",
+                "supportedDocumentsUrl": "https://github.com/BlinkID/blinkid-ios/blob/master/documentation/BlinkIDRecognizer.md"
+        ]
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -27,41 +39,39 @@ android {
     buildFeatures {
         viewBinding true
     }
-
     compileOptions {
-        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
-    packagingOptions {
-        jniLibs {
-            useLegacyPackaging true
-        }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
 }
 
 dependencies {
-    implementation 'com.google.android.material:material:1.4.0'
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:[1.0.9,2.0.0['
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "androidx.appcompat:appcompat:$rootProject.appcompatVersion"
-    implementation "com.appliedrec.verid:ui2:$rootProject.veridVersion"
-    implementation 'com.google.firebase:firebase-analytics:20.0.0'
-    implementation 'com.google.firebase:firebase-crashlytics:18.2.4'
-    implementation("com.microblink:blinkid:$rootProject.blinkidVersion@aar") {
+
+    implementation 'androidx.core:core-ktx:1.10.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.preference:preference:1.2.0'
+    implementation 'com.appliedrec.verid:ui2:2.9.0'
+    implementation('com.microblink:blinkid:6.1.2@aar') {
         transitive = true
     }
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
-    implementation 'androidx.security:security-crypto:1.1.0-alpha03'
-    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
     implementation 'org.apache.commons:commons-math3:3.6.1'
-    implementation 'com.github.AppliedRecognition:Barcode-Data-Matcher-Android:v1.1.1'
-
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.4.0'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test:rules:1.4.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    androidTestUtil 'androidx.test:orchestrator:1.4.0'
+    implementation 'com.google.mlkit:barcode-scanning:17.1.0'
+    implementation 'com.google.guava:guava:30.1.1-android'
+    implementation files("libs/document-verification-client.aar")
+    implementation 'androidx.camera:camera-lifecycle:1.2.2'
+    implementation 'androidx.camera:camera-view:1.2.2'
+    implementation "androidx.camera:camera-camera2:1.2.2"
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
 }
