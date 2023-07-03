@@ -50,7 +50,7 @@ class FaceComparisonActivity : AppCompatActivity() {
             )
             val threshold = 4f
             if (score >= threshold) {
-                val probability = NormalDistribution().cumulativeProbability(score * 100.0)
+                val probability = NormalDistribution().cumulativeProbability(score.toDouble()) * 100.0
                 viewBinding.scoreText.text = String.format("The face matching score %.02f indicates a likelihood of %.0f%% that the person on the ID card is the same person as the one in the selfie. We recommend a threshold of %.02f for a positive identification when comparing faces from identity cards.", score, probability, threshold)
             } else {
                 viewBinding.scoreText.text = String.format("The face matching score %.02f indicates that the person on the ID card is likely NOT the same person as the one in the selfie. We recommend a threshold of %.02f for a positive identification when comparing faces from identity cards.", score, threshold)
