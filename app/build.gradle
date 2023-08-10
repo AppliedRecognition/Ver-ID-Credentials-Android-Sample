@@ -59,16 +59,16 @@ dependencies {
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'com.appliedrec.verid:ui2:2.11.0'
-    implementation('com.microblink:blinkid:6.1.2@aar') {
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.appliedrec.verid:ui2:2.11.1'
+    implementation('com.microblink:blinkid:6.2.1@aar') {
         transitive = true
     }
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.2'
     implementation 'org.apache.commons:commons-math3:3.6.1'
-    implementation 'com.google.mlkit:barcode-scanning:17.1.0'
+    implementation 'com.google.mlkit:barcode-scanning:17.2.0'
     implementation 'com.google.guava:guava:30.1.1-android'
     implementation files("libs/document-verification-client.aar")
     implementation 'androidx.camera:camera-lifecycle:1.2.3'
@@ -77,5 +77,5 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.2"
 }
