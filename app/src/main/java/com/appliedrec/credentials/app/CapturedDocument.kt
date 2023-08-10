@@ -139,6 +139,7 @@ class CapturedDocument(val documentCaptureResult: BlinkIdMultiSideRecognizer.Res
                             DataMatchField.DocumentNumber -> fields.add(DocumentField("Document number check", if (state.state == DataMatchState.Success) "Passed" else "Failed"))
                             DataMatchField.DateOfBirth -> fields.add(DocumentField("Date of birth check", if (state.state == DataMatchState.Success) "Passed" else "Failed"))
                             DataMatchField.DateOfExpiry -> fields.add(DocumentField("Date of expiry check", if (state.state == DataMatchState.Success) "Passed" else "Failed"))
+                            else -> {}
                         }
                     }
                 }
