@@ -11,8 +11,8 @@ android {
         applicationId "com.appliedrec.credentials.app"
         minSdk 24
         targetSdk 33
-        versionCode 8000001
-        versionName "8.0.1"
+        versionCode 8000002
+        versionName "8.0.2"
         archivesBaseName += "-$versionName"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
